@@ -128,3 +128,20 @@ Content-Type: application/json
 GET http://localhost:8080/api/v1/progress
 Authorization: Bearer TOKEN
 Content-Type: application/json
+
+
+### 12. List Subjects with Pagination
+GET http://localhost:8080/api/v1/subjects?page=1&limit=5
+Content-Type: application/json
+
+### 13. Search Subjects
+GET http://localhost:8080/api/v1/subjects?q=Math
+Content-Type: application/json
+
+### 14. Filter Topics By Subject & Difficulty
+GET http://localhost:8080/api/v1/topics?subject_id=1&difficulty=med
+Content-Type: application/json
+
+### 15. List Topics with Pagination
+GET http://localhost:8080/api/v1/topics?page=1&limit=10
+Content-Type: application/json
