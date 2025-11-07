@@ -24,6 +24,7 @@ model User {
   level         Int       @default(1)
   streak_days   Int       @default(0)
   attempts      Attempt[]
+  progress      Progress[]
 }
 
 model Subject {
@@ -42,7 +43,21 @@ model Topic {
   difficulty   String     @default("med")
   created_at   DateTime   @default(now())
   Subject      Subject    @relation(fields: [subject_id], references: [id])
+  flashcards   Flashcard[]
   quizzes      Quiz[]
+  progress     Progress[]
+}
+
+model Flashcard {
+  id         Int      @id @default(autoincrement())
+  topic_id   Int
+  front_text String
+  back_text  String
+  image_url  String?
+  language   String   @default("en")
+  is_premium Boolean  @default(false)
+  created_at DateTime @default(now())
+  Topic      Topic    @relation(fields: [topic_id], references: [id])
 }
 
 model Quiz {
@@ -62,13 +77,26 @@ model Quiz {
 }
 
 model Attempt {
-  id            Int      @id @default(autoincrement())
-  user_id       Int
-  quiz_id       Int
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  quiz_id         Int
   selected_option String
-  is_correct    Boolean
-  score         Int
-  attempt_date  DateTime @default(now())
-  User          User     @relation(fields: [user_id], references: [id])
-  Quiz          Quiz     @relation(fields: [quiz_id], references: [id])
+  is_correct      Boolean
+  score           Int
+  attempt_date    DateTime @default(now())
+  User            User     @relation(fields: [user_id], references: [id])
+  Quiz            Quiz     @relation(fields: [quiz_id], references: [id])
+}
+
+model Progress {
+  id                 Int      @id @default(autoincrement())
+  user_id            Int
+  topic_id           Int
+  completion_percent Float    @default(0)
+  xp_earned          Int      @default(0)
+  last_updated       DateTime @default(now())
+  User               User     @relation(fields: [user_id], references: [id])
+  Topic              Topic    @relation(fields: [topic_id], references: [id])
+
+  @@unique([user_id, topic_id])
 }

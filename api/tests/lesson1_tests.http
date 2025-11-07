@@ -1,0 +1,99 @@
+### 1. Health
+GET http://localhost:8080/api/v1/health
+Content-Type: application/json
+
+### 2. Register
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Bright Dzotor",
+  "email": "bright@test.com",
+  "password": "StrongPass123"
+}
+
+### 3. Login  (copy token from response)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "bright@test.com",
+  "password": "StrongPass123"
+}
+
+### 4. Profile  (replace TOKEN below)
+GET http://localhost:8080/api/v1/auth/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
+
+Content-Type: application/json
+
+### 5. Create Subject
+POST http://localhost:8080/api/v1/subjects
+Content-Type: application/json
+
+{
+  "subject_name": "Mathematics",
+  "grade_level": "Grade 6",
+  "description": "Basic math concepts"
+}
+
+### 6. Create Topic
+POST http://localhost:8080/api/v1/topics
+Content-Type: application/json
+
+{
+  "subject_id": 1,
+  "topic_name": "Fractions",
+  "difficulty": "med"
+}
+
+### 7. Create Flashcard
+POST http://localhost:8080/api/v1/flashcards
+Content-Type: application/json
+
+{
+  "topic_id": 1,
+  "front_text": "1/2 + 1/4 ?",
+  "back_text": "3/4"
+}
+
+### 8. Create Quiz
+POST http://localhost:8080/api/v1/quizzes
+Content-Type: application/json
+
+{
+  "topic_id": 1,
+  "question_text": "Simplify 1/2 + 1/4",
+  "option_a": "1/2",
+  "option_b": "3/4",
+  "option_c": "1",
+  "option_d": "2",
+  "correct_option": "B",
+  "difficulty": "med"
+}
+
+### 9. Attempt Quiz  (replace TOKEN)
+POST http://localhost:8080/api/v1/attempts
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "quiz_id": 1,
+  "selected_option": "B"
+}
+
+### 10. Update Progress  (replace TOKEN)
+PUT http://localhost:8080/api/v1/progress
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "topic_id": 1,
+  "new_percent": 80,
+  "xp_earned": 10
+}
+
+### 11. View Progress  (replace TOKEN)
+GET http://localhost:8080/api/v1/progress
+Authorization: Bearer TOKEN
+Content-Type: application/json

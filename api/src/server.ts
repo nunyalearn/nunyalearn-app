@@ -1,19 +1,24 @@
-import express from "express";
+import "dotenv/config";
 import cors from "cors";
-import "dotenv/config";  // This loads environment variables
+import express from "express";
+import routes from "./routes";
+import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Health check route
-app.get("/api/v1/health", (_req, res) => {
-  res.json({ success: true, message: "Nunyalearn API is running 🚀" });
+app.use("/api/v1", routes);
+
+app.use((_req, res) => {
+  return res.status(404).json({ success: false, message: "Route not found" });
 });
 
-// Start server
-const PORT = process.env.PORT || 8080;
+app.use(errorHandler);
+
+const PORT = Number(process.env.PORT) || 8080;
+
 app.listen(PORT, () => {
-  console.log(`✅ Server started on http://localhost:${PORT}`);
+  console.log(`✅ Nunyalearn API running on http://localhost:${PORT}`);
 });
-
