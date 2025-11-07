@@ -23,8 +23,11 @@ model User {
   xp_total      Int       @default(0)
   level         Int       @default(1)
   streak_days   Int       @default(0)
+  role          Role      @default(USER)
   attempts      Attempt[]
   progress      Progress[]
+  tokens        UserToken[]
+  passwordResets PasswordReset[]
 }
 
 model Subject {
@@ -99,4 +102,28 @@ model Progress {
   Topic              Topic    @relation(fields: [topic_id], references: [id])
 
   @@unique([user_id, topic_id])
+}
+
+model UserToken {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model PasswordReset {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  token      String   @unique
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
 }

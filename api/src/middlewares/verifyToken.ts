@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../config/db";
-import { verifyUserToken } from "../utils/jwtHelper";
+import { verifyToken as verifyJwtToken } from "../utils/jwtHelper";
+import { Role } from "@prisma/client";
 
 interface DecodedToken {
   userId: number;
   email: string;
+  role: Role;
 }
 
 declare global {
@@ -16,6 +18,7 @@ declare global {
         fullName: string;
         isPremium: boolean;
         level: number;
+        role: Role;
       };
     }
   }
@@ -32,7 +35,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     if (!token) {
       return res.status(401).json({ success: false, message: "Authorization header malformed" });
     }
-    const decoded = verifyUserToken<DecodedToken>(token);
+    const decoded = verifyJwtToken<DecodedToken>(token, "access");
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -42,6 +45,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
         full_name: true,
         is_premium: true,
         level: true,
+        role: true,
       },
     });
 
@@ -55,6 +59,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       fullName: user.full_name,
       isPremium: user.is_premium,
       level: user.level,
+      role: user.role,
     };
 
     next();
