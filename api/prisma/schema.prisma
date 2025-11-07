@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  full_name     String
+  email         String    @unique
+  password_hash String
+  join_date     DateTime  @default(now())
+  is_premium    Boolean   @default(false)
+  xp_total      Int       @default(0)
+  level         Int       @default(1)
+  streak_days   Int       @default(0)
+  attempts      Attempt[]
+}
+
+model Subject {
+  id           Int       @id @default(autoincrement())
+  subject_name String
+  grade_level  String
+  description  String?
+  topics       Topic[]
+  created_at   DateTime  @default(now())
+}
+
+model Topic {
+  id           Int       @id @default(autoincrement())
+  subject_id   Int
+  topic_name   String
+  difficulty   String     @default("med")
+  created_at   DateTime   @default(now())
+  Subject      Subject    @relation(fields: [subject_id], references: [id])
+  quizzes      Quiz[]
+}
+
+model Quiz {
+  id             Int       @id @default(autoincrement())
+  topic_id       Int
+  question_text  String
+  option_a       String
+  option_b       String
+  option_c       String
+  option_d       String
+  correct_option String
+  difficulty     String    @default("med")
+  is_premium     Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  Topic          Topic     @relation(fields: [topic_id], references: [id])
+  attempts       Attempt[]
+}
+
+model Attempt {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  quiz_id       Int
+  selected_option String
+  is_correct    Boolean
+  score         Int
+  attempt_date  DateTime @default(now())
+  User          User     @relation(fields: [user_id], references: [id])
+  Quiz          Quiz     @relation(fields: [quiz_id], references: [id])
+}
