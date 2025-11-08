@@ -61,6 +61,58 @@ export const getXpToNextLevel = (xpTotal: number): number => {
   return 0;
 };
 
+export const recordXpChange = async (userId: number, amount: number, reason?: string) => {
+  if (amount === 0) {
+    return;
+  }
+
+  await prisma.xpHistory.create({
+    data: {
+      user_id: userId,
+      xp_change: amount,
+      reason: reason ?? null,
+    },
+  });
+};
+
+export const applyXpChange = async (userId: number, amount: number, reason?: string) => {
+  if (amount === 0) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, xp_total: true, level: true, streak_days: true },
+    });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, xp_total: true, level: true, streak_days: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const newXpTotal = Math.max(0, user.xp_total + amount);
+  const newLevel = getLevel(newXpTotal);
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      xp_total: newXpTotal,
+      level: newLevel,
+    },
+    select: { id: true, full_name: true, xp_total: true, level: true, streak_days: true },
+  });
+
+  await recordXpChange(userId, amount, reason);
+
+  return updated;
+};
+
 const STREAK_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const updateStreak = async (userId: number): Promise<number> => {

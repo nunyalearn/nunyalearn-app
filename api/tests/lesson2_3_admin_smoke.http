@@ -1,0 +1,71 @@
+##############################################
+# LESSON 2.3 – ADMIN API SMOKE TESTS
+##############################################
+
+@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiYWRtaW5AbnVueWEuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzYyNjExNDM0LCJleHAiOjE3NjI2MTIzMzR9.7_W1zGemScBc_qsipT7M7UdBUnQMi1AoaLBorfrXWgs
+
+### 1) Create Badge
+POST http://localhost:8080/api/v1/admin/badges
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Platinum Pro",
+  "xp_required": 1000,
+  "icon_url": "https://example.com/badges/platinum.png"
+}
+
+### 2) List Badges
+GET http://localhost:8080/api/v1/admin/badges?page=1&limit=10
+Authorization: {{adminToken}}
+
+### 3) Create Achievement
+POST http://localhost:8080/api/v1/admin/achievements
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Quiz Marathon",
+  "description": "Complete 25 quizzes",
+  "xp_reward": 40,
+  "criteria": "attempts>=25",
+  "icon_url": "https://example.com/badges/platinum.png"
+}
+
+### 4) List Achievements
+GET http://localhost:8080/api/v1/admin/achievements?page=1&limit=10
+Authorization: {{adminToken}}
+
+### 5) Create Challenge
+POST http://localhost:8080/api/v1/admin/challenges
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Weekly Warrior",
+  "description": "Finish 5 quizzes this week",
+  "type": "weekly",
+  "xp_reward": 50,
+  "start_date": "2025-11-03T00:00:00.000Z",
+  "end_date": "2025-11-10T00:00:00.000Z",
+  "icon_url": "https://example.com/badges/platinum.png"
+}
+
+### 6) List Challenges (activeOnly)
+GET http://localhost:8080/api/v1/admin/challenges?type=weekly&activeOnly=true&page=1&limit=10
+Authorization: {{adminToken}}
+
+### 7) Challenge Participants (replace :id)
+GET http://localhost:8080/api/v1/admin/challenges/1/participants
+Authorization: {{adminToken}}
+
+### 8) Grant Reward XP
+POST http://localhost:8080/api/v1/admin/rewards/grant
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "xp": 25,
+  "reason": "Admin Bonus"
+}

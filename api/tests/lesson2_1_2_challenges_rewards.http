@@ -10,7 +10,7 @@ Content-Type: application/json
 
 ### 2. Join a Challenge
 POST http://localhost:8080/api/v1/challenges/join
-Authorization: Bearer <user_access_token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 {
@@ -30,13 +30,13 @@ Content-Type: application/json
 
 ### 4. View XP History (recent XP updates)
 GET http://localhost:8080/api/v1/xp-history
-Authorization: Bearer <user_access_token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 
 ### 5. Profile (verify active + completed challenges + XP history)
 GET http://localhost:8080/api/v1/auth/profile
-Authorization: Bearer <user_access_token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 

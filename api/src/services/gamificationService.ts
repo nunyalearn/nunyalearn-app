@@ -1,6 +1,6 @@
 import { ChallengeStatus } from "@prisma/client";
 import prisma from "../config/db";
-import { getBadgeForXp, getLevel } from "./xpService";
+import { applyXpChange, getBadgeForXp, getLevel, recordXpChange } from "./xpService";
 
 type AchievementRule = {
   key: string;
@@ -121,17 +121,6 @@ export const checkAchievements = async (userId: number) => {
   }
 
   return earned;
-};
-
-export const recordXpChange = async (userId: number, amount: number, reason?: string) => {
-  if (amount === 0) return;
-  await prisma.xpHistory.create({
-    data: {
-      user_id: userId,
-      xp_change: amount,
-      reason: reason ?? null,
-    },
-  });
 };
 
 export const expireStaleChallenges = async (userId?: number) => {
