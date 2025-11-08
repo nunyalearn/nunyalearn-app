@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../config/db";
 import { getLevel, getXp, updateStreak } from "../services/xpService";
+import { applyRewards } from "../services/gamificationService";
 
 const booleanQuery = z
   .union([z.literal("true"), z.literal("false"), z.boolean()])
@@ -181,12 +182,15 @@ export const submitAttempt = async (req: Request, res: Response, next: NextFunct
     });
 
     await updateStreak(req.user.id);
+    const rewards = await applyRewards(req.user.id, xpEarned);
 
     return res.status(201).json({
       success: true,
       data: {
         score,
         xp_awarded: xpEarned,
+        newBadge: rewards.newBadge,
+        newAchievements: rewards.newAchievements,
       },
     });
   } catch (error) {

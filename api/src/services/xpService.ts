@@ -52,6 +52,15 @@ export const getLevel = (xpTotal: number): number => {
   return currentLevel;
 };
 
+export const getXpToNextLevel = (xpTotal: number): number => {
+  for (const threshold of LEVEL_THRESHOLDS) {
+    if (xpTotal < threshold.xp) {
+      return threshold.xp - xpTotal;
+    }
+  }
+  return 0;
+};
+
 const STREAK_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const updateStreak = async (userId: number): Promise<number> => {

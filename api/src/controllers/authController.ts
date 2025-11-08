@@ -10,6 +10,8 @@ import {
   signRefreshToken,
   verifyToken,
 } from "../utils/jwtHelper";
+import { getXpToNextLevel } from "../services/xpService";
+import { expireStaleChallenges } from "../services/gamificationService";
 
 const SALT_ROUNDS = 10;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -177,10 +179,89 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    await expireStaleChallenges(user.id);
+
+    const [badges, achievements, activeChallenges, completedChallenges, totalAttempts, correctAttempts, xpHistory] =
+      await Promise.all([
+        prisma.badge.findMany({
+          where: { xp_required: { lte: user.xp_total } },
+          orderBy: { xp_required: "asc" },
+        }),
+        prisma.userAchievement.findMany({
+          where: { user_id: user.id },
+          orderBy: { earned_at: "desc" },
+          include: {
+            Achievement: true,
+          },
+        }),
+        prisma.userChallenge.findMany({
+          where: { user_id: user.id, status: "joined" },
+          include: { Challenge: true },
+        }),
+        prisma.userChallenge.findMany({
+          where: { user_id: user.id, status: "completed" },
+          include: { Challenge: true },
+          orderBy: { completed_at: "desc" },
+          take: 10,
+        }),
+        prisma.attempt.count({ where: { user_id: user.id } }),
+        prisma.attempt.count({ where: { user_id: user.id, is_correct: true } }),
+        prisma.xpHistory.findMany({
+          where: { user_id: user.id },
+          orderBy: { created_at: "desc" },
+          take: 10,
+        }),
+      ]);
+
+    const completionRate =
+      totalAttempts === 0 ? 0 : Math.round((correctAttempts / totalAttempts) * 100);
+
+    const xpToNextLevel = getXpToNextLevel(user.xp_total);
+
     return res.json({
       success: true,
       data: {
         user: sanitizeUser(user),
+        badges: badges.map((badge) => ({
+          id: badge.id,
+          name: badge.name,
+          xp_required: badge.xp_required,
+          icon_url: badge.icon_url,
+        })),
+        achievements: achievements.map((record) => ({
+          id: record.achievement_id,
+          name: record.Achievement.name,
+          description: record.Achievement.description,
+          xp_reward: record.Achievement.xp_reward,
+          icon_url: record.Achievement.icon_url,
+          earned_at: record.earned_at,
+        })),
+        activeChallenges: activeChallenges.map((challenge) => ({
+          id: challenge.challenge_id,
+          title: challenge.Challenge.title,
+          type: challenge.Challenge.type,
+          progress: challenge.progress ?? 0,
+          end_date: challenge.Challenge.end_date,
+        })),
+        completedChallenges: completedChallenges.map((challenge) => ({
+          id: challenge.challenge_id,
+          title: challenge.Challenge.title,
+          completed_at: challenge.completed_at,
+        })),
+        stats: {
+          total_attempts: totalAttempts,
+          completion_rate: completionRate,
+          total_xp_gained: user.xp_total,
+          longest_streak: user.streak_days,
+          current_level: user.level,
+          xp_to_next_level: xpToNextLevel,
+        },
+        xpHistory: xpHistory.map((entry) => ({
+          id: entry.id,
+          xp_change: entry.xp_change,
+          reason: entry.reason,
+          created_at: entry.created_at,
+        })),
       },
     });
   } catch (error) {

@@ -6,6 +6,8 @@ import flashcardRoutes from "./flashcardRoutes";
 import quizRoutes from "./quizRoutes";
 import progressRoutes from "./progressRoutes";
 import leaderboardRoutes from "./leaderboardRoutes";
+import challengeRoutes from "./challengeRoutes";
+import xpHistoryRoutes from "./xpHistoryRoutes";
 
 const router = Router();
 
@@ -20,5 +22,7 @@ router.use("/flashcards", flashcardRoutes);
 router.use("/quizzes", quizRoutes);
 router.use("/progress", progressRoutes);
 router.use("/leaderboard", leaderboardRoutes);
+router.use("/challenges", challengeRoutes);
+router.use("/xp-history", xpHistoryRoutes);
 
 export default router;

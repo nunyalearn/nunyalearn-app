@@ -28,6 +28,9 @@ model User {
   progress      Progress[]
   tokens        UserToken[]
   passwordResets PasswordReset[]
+  userAchievements UserAchievement[]
+  userChallenges  UserChallenge[]
+  xpHistory       XpHistory[]
 }
 
 model Subject {
@@ -109,6 +112,74 @@ model Badge {
   name        String
   xp_required Int
   icon_url    String?
+}
+
+model Achievement {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  description  String?
+  xp_reward    Int      @default(0)
+  criteria     String?
+  icon_url     String?
+  created_at   DateTime @default(now())
+  userProgress UserAchievement[]
+}
+
+model UserAchievement {
+  user_id        Int
+  achievement_id Int
+  earned_at      DateTime @default(now())
+  User           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Achievement    Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, achievement_id])
+}
+
+model Challenge {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String?
+  type        ChallengeType
+  xp_reward   Int
+  start_date  DateTime
+  end_date    DateTime
+  icon_url    String?
+  created_at  DateTime       @default(now())
+  participants UserChallenge[]
+}
+
+model UserChallenge {
+  user_id       Int
+  challenge_id  Int
+  status        ChallengeStatus @default(joined)
+  progress      Float?          @default(0)
+  joined_at     DateTime        @default(now())
+  completed_at  DateTime?
+  User          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Challenge     Challenge       @relation(fields: [challenge_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, challenge_id])
+}
+
+model XpHistory {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  xp_change  Int
+  reason     String?
+  created_at DateTime @default(now())
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum ChallengeType {
+  daily
+  weekly
+  event
+}
+
+enum ChallengeStatus {
+  joined
+  completed
+  expired
 }
 
 model UserToken {
