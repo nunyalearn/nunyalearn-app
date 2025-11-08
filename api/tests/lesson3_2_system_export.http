@@ -1,0 +1,21 @@
+##############################################
+# LESSON 3.2 – SYSTEM & DATA TOOLS
+##############################################
+
+@adminToken = Bearer <ADMIN_ACCESS_TOKEN>
+
+### Health Check
+GET http://localhost:8080/api/v1/admin/system/health
+Authorization: {{adminToken}}
+
+### Logs (last 50)
+GET http://localhost:8080/api/v1/admin/system/logs?limit=50
+Authorization: {{adminToken}}
+
+### Export – Attempts CSV
+GET http://localhost:8080/api/v1/admin/export/attempts.csv?limit=100
+Authorization: {{adminToken}}
+
+### Export – Progress XLSX
+GET http://localhost:8080/api/v1/admin/export/progress.xlsx?range=30d
+Authorization: {{adminToken}}

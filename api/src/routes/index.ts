@@ -12,6 +12,9 @@ import badgeAdminRoutes from "./admin/badgeAdminRoutes";
 import achievementAdminRoutes from "./admin/achievementAdminRoutes";
 import challengeAdminRoutes from "./admin/challengeAdminRoutes";
 import rewardsAdminRoutes from "./admin/rewardsAdminRoutes";
+import reportingAdminRoutes from "./admin/reportingAdminRoutes";
+import metricsAdminRoutes from "./admin/metricsAdminRoutes";
+import exportAdminRoutes from "./admin/exportAdminRoutes";
 
 const router = Router();
 
@@ -32,5 +35,8 @@ router.use("/admin/badges", badgeAdminRoutes);
 router.use("/admin/achievements", achievementAdminRoutes);
 router.use("/admin/challenges", challengeAdminRoutes);
 router.use("/admin/rewards", rewardsAdminRoutes);
+router.use("/admin/reporting", reportingAdminRoutes);
+router.use("/admin/system", metricsAdminRoutes);
+router.use("/admin/export", exportAdminRoutes);
 
 export default router;

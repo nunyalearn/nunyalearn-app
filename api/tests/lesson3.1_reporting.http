@@ -1,0 +1,23 @@
+##############################################
+# LESSON 3.1 – REPORTING ENDPOINTS
+##############################################
+
+@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiYWRtaW5AbnVueWEuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzYyNjEzOTA3LCJleHAiOjE3NjI2MTQ4MDd9.S5PDHzfnvfBwH7x7kou_gfjVeVD61e8I8KagiQdbXXw
+GET http://localhost:8080/api/v1/admin/reporting/attempts?page=1&limit=5
+Authorization: {{adminToken}}
+
+### Progress
+GET http://localhost:8080/api/v1/admin/reporting/progress?subjectId=1
+Authorization: {{adminToken}}
+
+### Engagement
+GET http://localhost:8080/api/v1/admin/reporting/engagement?range=7d
+Authorization: {{adminToken}}
+
+### Leaderboard
+GET http://localhost:8080/api/v1/admin/reporting/leaderboard?limit=5&sortBy=xp
+Authorization: {{adminToken}}
+
+### Metrics
+GET http://localhost:8080/api/v1/admin/reporting/metrics
+Authorization: {{adminToken}}
