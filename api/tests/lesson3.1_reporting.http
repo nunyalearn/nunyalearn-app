@@ -2,7 +2,9 @@
 # LESSON 3.1 – REPORTING ENDPOINTS
 ##############################################
 
-@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiYWRtaW5AbnVueWEuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzYyNjEzOTA3LCJleHAiOjE3NjI2MTQ4MDd9.S5PDHzfnvfBwH7x7kou_gfjVeVD61e8I8KagiQdbXXw
+@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiYWRtaW5AbnVueWEuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzYyNjExNDM0LCJleHAiOjE3NjI2MTIzMzR9.7_W1zGemScBc_qsipT7M7UdBUnQMi1AoaLBorfrXWgs
+
+### Attempts
 GET http://localhost:8080/api/v1/admin/reporting/attempts?page=1&limit=5
 Authorization: {{adminToken}}
 

@@ -18,7 +18,7 @@ type DataTableProps<T> = {
   emptyLabel?: string;
 };
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends Record<string, any>>({
   columns,
   data = [],
   isLoading,
@@ -45,11 +45,10 @@ export function DataTable<T extends Record<string, unknown>>({
           placeholder="Search..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="max-w-sm"
+          className="max-w-md"
         />
       ) : null}
-
-      <div className="rounded-xl border bg-white shadow-sm dark:bg-card">
+      <div className="rounded-3xl border bg-white shadow-sm dark:bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -61,13 +60,13 @@ export function DataTable<T extends Record<string, unknown>>({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-muted-foreground">
                   {emptyLabel}
                 </TableCell>
               </TableRow>

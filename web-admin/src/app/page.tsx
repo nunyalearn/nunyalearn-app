@@ -1,65 +1,149 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import useSWR from "swr";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+} from "recharts";
+import StatCard from "@/components/StatCard";
+import ChartCard from "@/components/ChartCard";
+import { DataTable } from "@/components/DataTable";
+import Loader from "@/components/Loader";
+import { fetcher } from "@/lib/api";
+
+type MetricsResponse = {
+  totalUsers?: number;
+  totalBadges?: number;
+  totalChallenges?: number;
+  totalQuizzes?: number;
+};
+
+type EngagementResponse = {
+  activeUsers: number;
+  quizzesCompleted: number;
+  averageXp: number;
+  averageStreak: number;
+};
+
+type LeaderboardEntry = {
+  userId: number;
+  fullName: string;
+  xp: number;
+  completionPercent?: number;
+  level?: number;
+};
+
+const DashboardPage = () => {
+  const { data: metrics, isLoading: metricsLoading } = useSWR<MetricsResponse>(
+    "/admin/reporting/metrics",
+    fetcher,
+    { refreshInterval: 60_000 },
+  );
+  const { data: engagement, isLoading: engagementLoading } = useSWR<EngagementResponse>(
+    "/admin/reporting/engagement?range=30d",
+    fetcher,
+  );
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useSWR<LeaderboardEntry[] | { leaderboard?: LeaderboardEntry[] }>(
+    "/admin/reporting/leaderboard?limit=6&sortBy=xp",
+    fetcher,
+  );
+  const leaderboard = Array.isArray(leaderboardData) ? leaderboardData : leaderboardData?.leaderboard ?? [];
+
+  if (metricsLoading && !metrics) {
+    return <Loader fullscreen />;
+  }
+
+  const engagementSeries = engagement ? [{ label: "Last 30 days", ...engagement }] : [];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-8">
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Operational Overview</p>
+        <h1 className="mt-1 text-3xl font-semibold text-primary">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Real-time KPIs from the Nunyalearn platform.</p>
+      </div>
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Active Learners"
+          value={metrics?.totalUsers?.toLocaleString() ?? "—"}
+          change="+8% MoM"
+          trend="up"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <StatCard
+          title="Published Quizzes"
+          value={metrics?.totalQuizzes ?? "—"}
+          change="+12 this week"
+          trend="up"
+        />
+        <StatCard title="Badges Live" value={metrics?.totalBadges ?? "—"} change="Gamification" trend="flat" />
+        <StatCard title="Challenges" value={metrics?.totalChallenges ?? "—"} change="+2 cohorts" trend="up" />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <ChartCard title="Engagement Pulse" description="Active users and quizzes completed (30d)">
+          {engagementLoading ? (
+            <Loader />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={engagementSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="activeUsers" stroke="#007a3e" strokeWidth={3} />
+                <Line type="monotone" dataKey="quizzesCompleted" stroke="#004976" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title="XP Leaders" description="Top learners by XP totals">
+          {leaderboardLoading ? (
+            <Loader />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={leaderboard ?? []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="fullName" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="xp" fill="#00ad50" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Leaderboard Table</h2>
+          <p className="text-sm text-muted-foreground">Live ranking with completion & levels</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <DataTable
+          columns={[
+            { key: "fullName", label: "Learner" },
+            { key: "xp", label: "XP" },
+            {
+              key: "completionPercent",
+              label: "Completion",
+              render: (row) => `${row.completionPercent?.toFixed(1) ?? 0}%`,
+            },
+            { key: "level", label: "Level" },
+          ]}
+          data={leaderboard}
+          isLoading={leaderboardLoading}
+        />
+      </section>
     </div>
   );
-}
+};
+
+export default DashboardPage;
