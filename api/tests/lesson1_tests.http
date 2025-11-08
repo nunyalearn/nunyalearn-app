@@ -105,7 +105,7 @@ Content-Type: application/json
 
 ### 9. Attempt Quiz  (replace TOKEN)
 POST http://localhost:8080/api/v1/attempts
-Authorization: Bearer TOKEN
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 {
@@ -115,7 +115,7 @@ Content-Type: application/json
 
 ### 10. Update Progress  (replace TOKEN)
 PUT http://localhost:8080/api/v1/progress
-Authorization: Bearer TOKEN
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 {
@@ -126,7 +126,7 @@ Content-Type: application/json
 
 ### 11. View Progress  (replace TOKEN)
 GET http://localhost:8080/api/v1/progress
-Authorization: Bearer TOKEN
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
 Content-Type: application/json
 
 
