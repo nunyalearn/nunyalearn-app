@@ -1,0 +1,41 @@
+##############################################
+#  LESSON 1.4 — FLASHCARDS & QUIZZES ENRICHMENT
+##############################################
+
+### 1. Flashcards — Paginated listing (topic 1, 5 per page)
+GET http://localhost:8080/api/v1/flashcards?topic_id=1&page=1&limit=5
+Content-Type: application/json
+
+### 2. Flashcards — Search by keyword
+GET http://localhost:8080/api/v1/flashcards?q=fraction
+Content-Type: application/json
+
+### 3. Flashcards — Filter by language (Spanish)
+GET http://localhost:8080/api/v1/flashcards?lang=es
+Content-Type: application/json
+
+### 4. Flashcards — Random shuffle (limit 3)
+GET http://localhost:8080/api/v1/flashcards?topic_id=1&limit=3&random=true
+Content-Type: application/json
+
+### 5. Quizzes — Paginated listing (topic 1)
+GET http://localhost:8080/api/v1/quizzes?topic_id=1&page=1&limit=5
+Content-Type: application/json
+
+### 6. Quizzes — Filter by difficulty
+GET http://localhost:8080/api/v1/quizzes?topic_id=1&difficulty=med
+Content-Type: application/json
+
+### 7. Quizzes — Random order (limit 2)
+GET http://localhost:8080/api/v1/quizzes?topic_id=1&limit=2&random=true
+Content-Type: application/json
+
+### 8. Quizzes — Submit attempt (replace TOKEN)
+POST http://localhost:8080/api/v1/quizzes/attempts
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
+Content-Type: application/json
+
+{
+  "quizId": 1,
+  "selectedOption": "B"
+}

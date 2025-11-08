@@ -1,0 +1,26 @@
+##############################################
+#  LESSON 1.5 — PROGRESS & GAMIFICATION
+##############################################
+
+### 1. Get progress overview (requires auth token)
+GET http://localhost:8080/api/v1/progress?page=1&limit=5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
+Content-Type: application/json
+
+### 2. Filter progress by subject
+GET http://localhost:8080/api/v1/progress?subject_id=1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
+Content-Type: application/json
+
+### 3. Recalculate topic progress
+PUT http://localhost:8080/api/v1/progress
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYnJpZ2h0QHRlc3QuY29tIiwiaWF0IjoxNzYyNTM4MTE1LCJleHAiOjE3NjMxNDI5MTV9.cOo9Cqd0ruFja4BM3Hmz2fJsklONPJkeGp6v09lpB_o
+Content-Type: application/json
+
+{
+  "topicId": 1
+}
+
+### 4. Leaderboard
+GET http://localhost:8080/api/v1/leaderboard
+Content-Type: application/json

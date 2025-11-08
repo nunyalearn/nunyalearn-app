@@ -104,6 +104,13 @@ model Progress {
   @@unique([user_id, topic_id])
 }
 
+model Badge {
+  id          Int     @id @default(autoincrement())
+  name        String
+  xp_required Int
+  icon_url    String?
+}
+
 model UserToken {
   id         Int      @id @default(autoincrement())
   user_id    Int
