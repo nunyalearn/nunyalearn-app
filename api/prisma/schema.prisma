@@ -14,44 +14,61 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  full_name     String
-  email         String    @unique
-  password_hash String
-  join_date     DateTime  @default(now())
-  is_premium    Boolean   @default(false)
-  xp_total      Int       @default(0)
-  level         Int       @default(1)
-  streak_days   Int       @default(0)
-  role          Role      @default(USER)
-  attempts      Attempt[]
-  progress      Progress[]
-  tokens        UserToken[]
-  passwordResets PasswordReset[]
-  userAchievements UserAchievement[]
-  userChallenges  UserChallenge[]
-  xpHistory       XpHistory[]
+  id                 Int               @id @default(autoincrement())
+  full_name          String
+  email              String            @unique
+  password_hash      String
+  join_date          DateTime          @default(now())
+  is_premium         Boolean           @default(false)
+  is_active          Boolean           @default(true)
+  xp_total           Int               @default(0)
+  level              Int               @default(1)
+  streak_days        Int               @default(0)
+  role               Role              @default(USER)
+  attempts           Attempt[]
+  progress           Progress[]
+  tokens             UserToken[]
+  passwordResets     PasswordReset[]
+  userAchievements   UserAchievement[]
+  userChallenges     UserChallenge[]
+  xpHistory          XpHistory[]
+  notifications      Notification[]    @relation("NotificationCreator")
+  reportedTickets    SupportTicket[]   @relation("TicketReporter")
+  assignedTickets    SupportTicket[]   @relation("TicketAssignee")
+  supportResponses   SupportResponse[] @relation("SupportResponseAuthor")
+  rewardGrants       RewardGrant[]     @relation("RewardRecipient")
+  issuedRewardGrants RewardGrant[]     @relation("RewardIssuer")
+  payments           Payment[]
+  subscriptions      Subscription[]
+  adminAuditLogs     AdminAuditLog[]   @relation("AdminAuditTrail")
 }
 
 model Subject {
-  id           Int       @id @default(autoincrement())
-  subject_name String
-  grade_level  String
-  description  String?
-  topics       Topic[]
-  created_at   DateTime  @default(now())
+  id             Int            @id @default(autoincrement())
+  subject_name   String
+  grade_level    String
+  grade_level_id Int?
+  description    String?
+  topics         Topic[]
+  practiceTests  PracticeTest[]
+  is_active      Boolean        @default(true)
+  GradeLevel     GradeLevel?    @relation(fields: [grade_level_id], references: [id])
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @default(now()) @updatedAt
 }
 
 model Topic {
-  id           Int       @id @default(autoincrement())
-  subject_id   Int
-  topic_name   String
-  difficulty   String     @default("med")
-  created_at   DateTime   @default(now())
-  Subject      Subject    @relation(fields: [subject_id], references: [id])
-  flashcards   Flashcard[]
-  quizzes      Quiz[]
-  progress     Progress[]
+  id         Int         @id @default(autoincrement())
+  subject_id Int
+  topic_name String
+  difficulty String      @default("med")
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now()) @updatedAt
+  is_active  Boolean     @default(true)
+  Subject    Subject     @relation(fields: [subject_id], references: [id])
+  flashcards Flashcard[]
+  quizzes    Quiz[]
+  progress   Progress[]
 }
 
 model Flashcard {
@@ -67,7 +84,7 @@ model Flashcard {
 }
 
 model Quiz {
-  id             Int       @id @default(autoincrement())
+  id             Int                @id @default(autoincrement())
   topic_id       Int
   question_text  String
   option_a       String
@@ -75,11 +92,15 @@ model Quiz {
   option_c       String
   option_d       String
   correct_option String
-  difficulty     String    @default("med")
-  is_premium     Boolean   @default(false)
-  created_at     DateTime  @default(now())
-  Topic          Topic     @relation(fields: [topic_id], references: [id])
+  difficulty     String             @default("med")
+  xp_reward      Int                @default(0)
+  question_type  String?
+  competency     String?
+  is_premium     Boolean            @default(false)
+  created_at     DateTime           @default(now())
+  Topic          Topic              @relation(fields: [topic_id], references: [id])
   attempts       Attempt[]
+  practiceTests  PracticeTestQuiz[]
 }
 
 model Attempt {
@@ -115,20 +136,20 @@ model Badge {
 }
 
 model Achievement {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
+  id           Int               @id @default(autoincrement())
+  name         String            @unique
   description  String?
-  xp_reward    Int      @default(0)
+  xp_reward    Int               @default(0)
   criteria     String?
   icon_url     String?
-  created_at   DateTime @default(now())
+  created_at   DateTime          @default(now())
   userProgress UserAchievement[]
 }
 
 model UserAchievement {
   user_id        Int
   achievement_id Int
-  earned_at      DateTime @default(now())
+  earned_at      DateTime    @default(now())
   User           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   Achievement    Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
 
@@ -136,27 +157,27 @@ model UserAchievement {
 }
 
 model Challenge {
-  id          Int           @id @default(autoincrement())
-  title       String
-  description String?
-  type        ChallengeType
-  xp_reward   Int
-  start_date  DateTime
-  end_date    DateTime
-  icon_url    String?
-  created_at  DateTime       @default(now())
+  id           Int             @id @default(autoincrement())
+  title        String
+  description  String?
+  type         ChallengeType
+  xp_reward    Int
+  start_date   DateTime
+  end_date     DateTime
+  icon_url     String?
+  created_at   DateTime        @default(now())
   participants UserChallenge[]
 }
 
 model UserChallenge {
-  user_id       Int
-  challenge_id  Int
-  status        ChallengeStatus @default(joined)
-  progress      Float?          @default(0)
-  joined_at     DateTime        @default(now())
-  completed_at  DateTime?
-  User          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  Challenge     Challenge       @relation(fields: [challenge_id], references: [id], onDelete: Cascade)
+  user_id      Int
+  challenge_id Int
+  status       ChallengeStatus @default(joined)
+  progress     Float?          @default(0)
+  joined_at    DateTime        @default(now())
+  completed_at DateTime?
+  User         User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Challenge    Challenge       @relation(fields: [challenge_id], references: [id], onDelete: Cascade)
 
   @@id([user_id, challenge_id])
 }
@@ -168,6 +189,144 @@ model XpHistory {
   reason     String?
   created_at DateTime @default(now())
   User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model PracticeTest {
+  id               Int                @id @default(autoincrement())
+  title            String
+  description      String?
+  subject_id       Int?
+  difficulty       String             @default("med")
+  xp_reward        Int                @default(0)
+  duration_minutes Int?
+  is_active        Boolean            @default(true)
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  Subject          Subject?           @relation(fields: [subject_id], references: [id])
+  quizzes          PracticeTestQuiz[]
+}
+
+model PracticeTestQuiz {
+  practice_test_id Int
+  quiz_id          Int
+  order_index      Int?
+  PracticeTest     PracticeTest @relation(fields: [practice_test_id], references: [id], onDelete: Cascade)
+  Quiz             Quiz         @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  @@id([practice_test_id, quiz_id])
+}
+
+model Notification {
+  id           Int                 @id @default(autoincrement())
+  title        String
+  message      String
+  status       NotificationStatus  @default(draft)
+  channel      NotificationChannel @default(app)
+  audience     String?
+  scheduled_at DateTime?
+  published_at DateTime?
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+  created_by   Int?
+  Creator      User?               @relation("NotificationCreator", fields: [created_by], references: [id])
+}
+
+model SupportTicket {
+  id          Int               @id @default(autoincrement())
+  subject     String
+  message     String?
+  status      TicketStatus      @default(open)
+  priority    TicketPriority    @default(medium)
+  user_id     Int?
+  user_email  String
+  assigned_to Int?
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  closed_at   DateTime?
+  Reporter    User?             @relation("TicketReporter", fields: [user_id], references: [id])
+  Assignee    User?             @relation("TicketAssignee", fields: [assigned_to], references: [id])
+  responses   SupportResponse[]
+}
+
+model SupportResponse {
+  id         Int           @id @default(autoincrement())
+  ticket_id  Int
+  author_id  Int?
+  message    String
+  created_at DateTime      @default(now())
+  Ticket     SupportTicket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  Author     User?         @relation("SupportResponseAuthor", fields: [author_id], references: [id])
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  user_id    Int?
+  user_email String
+  amount     Int
+  currency   String        @default("USD")
+  status     PaymentStatus @default(pending)
+  method     String?
+  reference  String?       @unique
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  User       User?         @relation(fields: [user_id], references: [id])
+}
+
+model Subscription {
+  id         Int                @id @default(autoincrement())
+  user_id    Int?
+  user_email String
+  plan       String
+  status     SubscriptionStatus @default(active)
+  renews_at  DateTime?
+  expires_at DateTime?
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+  User       User?              @relation(fields: [user_id], references: [id])
+}
+
+model Reward {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String?
+  xp_value    Int           @default(0)
+  is_active   Boolean       @default(true)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  grants      RewardGrant[]
+}
+
+model RewardGrant {
+  id         Int      @id @default(autoincrement())
+  reward_id  Int?
+  user_id    Int
+  granted_by Int?
+  xp_awarded Int      @default(0)
+  reason     String?
+  created_at DateTime @default(now())
+  Reward     Reward?  @relation(fields: [reward_id], references: [id], onDelete: SetNull)
+  Recipient  User     @relation("RewardRecipient", fields: [user_id], references: [id])
+  Admin      User?    @relation("RewardIssuer", fields: [granted_by], references: [id])
+}
+
+model PlatformSetting {
+  id                    Int      @id @default(1)
+  default_role          Role     @default(USER)
+  onboarding_message    String?
+  notifications_enabled Boolean  @default(true)
+  xp_multiplier         Float    @default(1)
+  updated_at            DateTime @updatedAt
+}
+
+model GradeLevel {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  order_index Int?
+  is_active   Boolean   @default(true)
+  subjects    Subject[]
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 }
 
 enum ChallengeType {
@@ -204,4 +363,54 @@ model PasswordReset {
 enum Role {
   USER
   ADMIN
+}
+
+enum NotificationStatus {
+  draft
+  scheduled
+  sent
+  cancelled
+}
+
+enum NotificationChannel {
+  app
+  email
+  push
+}
+
+enum TicketStatus {
+  open
+  pending
+  closed
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  trialing
+}
+
+model AdminAuditLog {
+  id         Int      @id @default(autoincrement())
+  admin_id   Int?
+  entity     String
+  action     String
+  entity_id  Int?
+  details    String?
+  created_at DateTime @default(now())
+  Admin      User?    @relation("AdminAuditTrail", fields: [admin_id], references: [id], onDelete: SetNull)
 }

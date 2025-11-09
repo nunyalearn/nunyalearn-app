@@ -9,12 +9,18 @@ const querySchema = z.object({
   subject_id: z.coerce.number().int().positive().optional(),
   difficulty: z.enum(["easy", "med", "medium", "hard"]).optional(),
   q: z.string().optional(),
+  includeInactive: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .transform((value) => (typeof value === "boolean" ? value : value === "true"))
+    .optional()
+    .default(false),
 });
 
 const createTopicSchema = z.object({
   subjectId: z.number().int().positive(),
   topicName: z.string().min(1),
   difficulty: z.enum(["easy", "med", "medium", "hard"]).optional().default("med"),
+  isActive: z.boolean().optional(),
 });
 
 const normalizeDifficulty = (value?: string | null) => {
@@ -27,7 +33,9 @@ export const getTopics = async (req: Request, res: Response, next: NextFunction)
     const query = querySchema.parse(req.query);
     const { page, limit } = query;
 
-    const where: Prisma.TopicWhereInput = {};
+    const where: Prisma.TopicWhereInput = {
+      ...(query.includeInactive ? {} : { is_active: true }),
+    };
 
     if (query.subject_id) {
       where.subject_id = query.subject_id;
@@ -67,7 +75,7 @@ export const getTopics = async (req: Request, res: Response, next: NextFunction)
         take: limit,
         include: {
           Subject: {
-            select: { id: true, subject_name: true, grade_level: true },
+            select: { id: true, subject_name: true, grade_level: true, is_active: true },
           },
         },
       }),
@@ -89,11 +97,21 @@ export const createTopic = async (req: Request, res: Response, next: NextFunctio
 
     const difficulty = normalizeDifficulty(payload.difficulty) ?? "med";
 
+    const subject = await prisma.subject.findUnique({
+      where: { id: payload.subjectId },
+      select: { id: true, is_active: true },
+    });
+
+    if (!subject || !subject.is_active) {
+      return res.status(400).json({ success: false, message: "Subject is not available" });
+    }
+
     const topic = await prisma.topic.create({
       data: {
         subject_id: payload.subjectId,
         topic_name: payload.topicName,
         difficulty,
+        is_active: payload.isActive ?? true,
       },
     });
 

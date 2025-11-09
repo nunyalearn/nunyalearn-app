@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createChallenge,
   deleteChallenge,
+  getChallenge,
   getChallengeParticipants,
   listChallenges,
   updateChallenge,
@@ -16,6 +17,7 @@ router.use(verifyToken, verifyRole(Role.ADMIN));
 
 router.post("/", createChallenge);
 router.get("/", listChallenges);
+router.get("/:id", getChallenge);
 router.get("/:id/participants", getChallengeParticipants);
 router.put("/:id", updateChallenge);
 router.delete("/:id", deleteChallenge);

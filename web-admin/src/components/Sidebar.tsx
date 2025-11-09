@@ -16,12 +16,14 @@ import {
   CreditCard,
   MonitorCog,
   Cog,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Gauge },
   { href: "/users", label: "Users", icon: Users },
+  { href: "/curriculum", label: "Curriculum", icon: GraduationCap },
   { href: "/flashcards", label: "Flashcards", icon: BookOpen },
   { href: "/quizzes", label: "Quizzes", icon: ListTree },
   { href: "/practice", label: "Practice Tests", icon: ShieldCheck },

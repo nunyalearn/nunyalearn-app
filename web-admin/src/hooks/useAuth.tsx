@@ -2,13 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import api, { fetcher, persistToken, TOKEN_STORAGE_KEY } from "@/lib/api";
+import api, { fetcher, getStoredToken, persistToken } from "@/lib/api";
 
 type AuthUser = {
   id: number;
   email: string;
+  fullName?: string;
   full_name?: string;
   role?: string;
+  isPremium?: boolean;
 };
 
 type AuthContextValue = {
@@ -28,11 +30,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Normalize token extraction so every caller honors the backend response contract.
+  const resolveResponseToken = (payload: unknown): string | null => {
+    const data = (payload as any)?.data;
+    const nestedData = data?.data;
+    return nestedData?.token ?? nestedData?.accessToken ?? data?.token ?? null;
+  };
+
   const loadProfile = useCallback(
     async (overrideToken?: string | null) => {
-      const currentToken =
-        overrideToken ?? (typeof window !== "undefined" ? window.localStorage.getItem(TOKEN_STORAGE_KEY) : null);
+      const currentToken = overrideToken ?? getStoredToken();
+      // No token means we must reset auth state and skip hitting protected endpoints.
       if (!currentToken) {
+        setToken(null);
         setUser(null);
         return;
       }
@@ -40,20 +50,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(currentToken);
       try {
         const profile = await fetcher<{ user: AuthUser } | AuthUser>("/auth/profile");
-        const parsed = (profile as any).user ? (profile as any).user : profile;
-        setUser(parsed);
+        const parsed = (profile as { user?: AuthUser }).user ?? profile;
+        setUser(parsed as AuthUser);
       } catch (error) {
+        // Treat any failure (401, network, etc.) as an invalid token and clear persisted state.
         console.error("Failed to fetch profile", error);
         persistToken(null);
         setUser(null);
         setToken(null);
+        throw error;
       }
     },
     [],
   );
 
   useEffect(() => {
-    loadProfile().finally(() => setLoading(false));
+    loadProfile()
+      .catch((error) => {
+        console.error("Initial profile load failed", error);
+      })
+      .finally(() => setLoading(false));
   }, [loadProfile]);
 
   const login = useCallback(
@@ -61,13 +77,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       try {
         const response = await api.post("/auth/login", { email, password });
-        const newToken = response.data?.token ?? response.data?.data?.token;
+        const newToken = resolveResponseToken(response);
         if (!newToken) {
-          throw new Error("Missing token in response");
+          throw new Error("Login response did not include an authentication token");
         }
         persistToken(newToken);
+        setToken(newToken);
         await loadProfile(newToken);
         router.replace("/");
+      } catch (error) {
+        // Ensure callers never keep a stale token when login or profile hydration fails.
+        persistToken(null);
+        setToken(null);
+        setUser(null);
+        throw error;
       } finally {
         setLoading(false);
       }

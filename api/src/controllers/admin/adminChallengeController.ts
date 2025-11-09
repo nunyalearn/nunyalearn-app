@@ -2,6 +2,7 @@ import { ChallengeStatus, ChallengeType, Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
+import { recordAdminAction } from "../../services/auditService";
 
 const challengeBodySchema = z.object({
   title: z.string().min(1),
@@ -46,7 +47,26 @@ export const createChallenge = async (req: Request, res: Response, next: NextFun
       },
     });
 
+    await recordAdminAction(req.user?.id, "Challenge", "CREATE", challenge.id, challenge.title);
+
     return res.status(201).json({ success: true, data: { challenge } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getChallenge = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params = idParamSchema.parse(req.params);
+    const challenge = await prisma.challenge.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ success: false, message: "Challenge not found" });
+    }
+
+    return res.json({ success: true, data: { challenge } });
   } catch (error) {
     next(error);
   }
@@ -77,6 +97,8 @@ export const updateChallenge = async (req: Request, res: Response, next: NextFun
       data,
     });
 
+    await recordAdminAction(req.user?.id, "Challenge", "UPDATE", params.id, challenge.title);
+
     return res.json({ success: true, data: { challenge } });
   } catch (error) {
     next(error);
@@ -86,9 +108,11 @@ export const updateChallenge = async (req: Request, res: Response, next: NextFun
 export const deleteChallenge = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params = idParamSchema.parse(req.params);
-    await prisma.challenge.delete({
+    const deleted = await prisma.challenge.delete({
       where: { id: params.id },
     });
+
+    await recordAdminAction(req.user?.id, "Challenge", "DELETE", params.id, deleted.title);
 
     return res.json({ success: true, message: "Challenge deleted" });
   } catch (error) {

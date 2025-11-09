@@ -181,37 +181,55 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
 
     await expireStaleChallenges(user.id);
 
-    const [badges, achievements, activeChallenges, completedChallenges, totalAttempts, correctAttempts, xpHistory] =
-      await Promise.all([
-        prisma.badge.findMany({
-          where: { xp_required: { lte: user.xp_total } },
-          orderBy: { xp_required: "asc" },
-        }),
-        prisma.userAchievement.findMany({
-          where: { user_id: user.id },
-          orderBy: { earned_at: "desc" },
-          include: {
-            Achievement: true,
-          },
-        }),
-        prisma.userChallenge.findMany({
-          where: { user_id: user.id, status: "joined" },
-          include: { Challenge: true },
-        }),
-        prisma.userChallenge.findMany({
-          where: { user_id: user.id, status: "completed" },
-          include: { Challenge: true },
-          orderBy: { completed_at: "desc" },
-          take: 10,
-        }),
-        prisma.attempt.count({ where: { user_id: user.id } }),
-        prisma.attempt.count({ where: { user_id: user.id, is_correct: true } }),
-        prisma.xpHistory.findMany({
-          where: { user_id: user.id },
-          orderBy: { created_at: "desc" },
-          take: 10,
-        }),
-      ]);
+    const results = await Promise.allSettled([
+      prisma.badge.findMany({
+        where: { xp_required: { lte: user.xp_total } },
+        orderBy: { xp_required: "asc" },
+      }),
+      prisma.userAchievement.findMany({
+        where: { user_id: user.id },
+        orderBy: { earned_at: "desc" },
+        include: {
+          Achievement: true,
+        },
+      }),
+      prisma.userChallenge.findMany({
+        where: { user_id: user.id, status: "joined" },
+        include: { Challenge: true },
+      }),
+      prisma.userChallenge.findMany({
+        where: { user_id: user.id, status: "completed" },
+        include: { Challenge: true },
+        orderBy: { completed_at: "desc" },
+        take: 10,
+      }),
+      prisma.attempt.count({ where: { user_id: user.id } }),
+      prisma.attempt.count({ where: { user_id: user.id, is_correct: true } }),
+      prisma.xpHistory.findMany({
+        where: { user_id: user.id },
+        orderBy: { created_at: "desc" },
+        take: 10,
+      }),
+    ]);
+
+    const [badgesResult, achievementsResult, activeChallengesResult, completedChallengesResult, totalAttemptsResult, correctAttemptsResult, xpHistoryResult] =
+      results;
+
+    const getValue = <T>(result: PromiseSettledResult<T>, fallback: T): T => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      }
+      console.error("[profile] sub-query failed", result.reason);
+      return fallback;
+    };
+
+    const badges = getValue(badgesResult, []);
+    const achievements = getValue(achievementsResult, []);
+    const activeChallenges = getValue(activeChallengesResult, []);
+    const completedChallenges = getValue(completedChallengesResult, []);
+    const totalAttempts = getValue(totalAttemptsResult, 0);
+    const correctAttempts = getValue(correctAttemptsResult, 0);
+    const xpHistory = getValue(xpHistoryResult, []);
 
     const completionRate =
       totalAttempts === 0 ? 0 : Math.round((correctAttempts / totalAttempts) * 100);

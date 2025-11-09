@@ -26,15 +26,18 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = getStoredToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  // Ensure every admin request automatically carries the latest persisted Bearer token.
+  const token = getStoredToken();
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
   }
   return config;
 });
 
+// Shared fetcher uses the configured axios instance so auth headers stay consistent.
 export const fetcher = async <T>(url: string): Promise<T> => {
   const response = await api.get(url);
   const payload = response.data as { data?: T };

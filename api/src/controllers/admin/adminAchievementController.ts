@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
+import { recordAdminAction } from "../../services/auditService";
 
 const achievementBodySchema = z.object({
   name: z.string().min(1),
@@ -37,6 +38,8 @@ export const createAchievement = async (req: Request, res: Response, next: NextF
       },
     });
 
+    await recordAdminAction(req.user?.id, "Achievement", "CREATE", achievement.id, achievement.name);
+
     return res.status(201).json({ success: true, data: { achievement } });
   } catch (error) {
     next(error);
@@ -61,6 +64,8 @@ export const updateAchievement = async (req: Request, res: Response, next: NextF
       data,
     });
 
+    await recordAdminAction(req.user?.id, "Achievement", "UPDATE", params.id, achievement.name);
+
     return res.json({ success: true, data: { achievement } });
   } catch (error) {
     next(error);
@@ -71,9 +76,11 @@ export const deleteAchievement = async (req: Request, res: Response, next: NextF
   try {
     const params = idParamSchema.parse(req.params);
 
-    await prisma.achievement.delete({
+    const deleted = await prisma.achievement.delete({
       where: { id: params.id },
     });
+
+    await recordAdminAction(req.user?.id, "Achievement", "DELETE", params.id, deleted.name);
 
     return res.json({ success: true, message: "Achievement deleted" });
   } catch (error) {
@@ -99,6 +106,23 @@ export const listAchievements = async (req: Request, res: Response, next: NextFu
       data: { achievements },
       pagination: { page, limit, total },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAchievement = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params = idParamSchema.parse(req.params);
+    const achievement = await prisma.achievement.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!achievement) {
+      return res.status(404).json({ success: false, message: "Achievement not found" });
+    }
+
+    return res.json({ success: true, data: { achievement } });
   } catch (error) {
     next(error);
   }
