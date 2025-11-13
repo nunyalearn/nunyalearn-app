@@ -1,90 +1,319 @@
-import { Prisma } from "@prisma/client";
+import { Difficulty, Prisma, QuestionStatus, QuestionType } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
+import ExcelJS from "exceljs";
+import Papa from "papaparse";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import {
+  NormalizedQuestionInput,
+  createQuestionSchema,
+  importQuestionRowSchema,
+  normalizeQuestionPayload,
+  questionIdSchema,
+  questionListQuerySchema,
+  updateQuestionSchema,
+  validateNormalizedQuestion,
+} from "../../validation/questionSchema";
 
-const listQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(25),
-  subjectId: z.coerce.number().int().positive().optional(),
-  topicId: z.coerce.number().int().positive().optional(),
-  difficulty: z.string().optional(),
-  search: z.string().optional(),
+const exportQuerySchema = questionListQuerySchema
+  .omit({ page: true, limit: true })
+  .extend({
+    format: z.enum(["csv", "xlsx"]).default("xlsx"),
+  });
+
+const templateQuerySchema = z.object({
+  format: z.enum(["csv", "xlsx"]).default("xlsx"),
 });
 
-const questionIdSchema = z.object({
-  id: z.coerce.number().int().positive(),
-});
+const questionTemplateHeaders = [
+  "questionText",
+  "questionType",
+  "options",
+  "correctOption",
+  "correctAnswers",
+  "gradeId",
+  "subjectId",
+  "topicId",
+  "difficulty",
+  "language",
+  "explanation",
+];
 
-const questionSchema = z.object({
-  topicId: z.coerce.number().int().positive(),
-  questionText: z.string().min(1),
-  optionA: z.string().min(1),
-  optionB: z.string().min(1),
-  optionC: z.string().min(1),
-  optionD: z.string().min(1),
-  correctOption: z.string().min(1),
-  difficulty: z.string().default("med"),
-  xpReward: z.coerce.number().int().nonnegative().default(0),
-  questionType: z.string().optional(),
-  competency: z.string().optional(),
-  isPremium: z.boolean().optional(),
-});
-
-const updateSchema = questionSchema.partial().refine(
-  (payload) => Object.keys(payload).length > 0,
-  { message: "At least one field required" },
-);
-
-const bulkSchema = z.object({
-  questions: z.array(questionSchema),
-});
-
-const includeTopic = {
+const questionInclude = {
   Topic: {
     select: {
       id: true,
       topic_name: true,
-      Subject: { select: { id: true, subject_name: true } },
+      Subject: {
+        select: {
+          id: true,
+          subject_name: true,
+        },
+      },
     },
   },
+} satisfies Prisma.QuestionBankInclude;
+
+type QuestionWithRelations = Prisma.QuestionBankGetPayload<{
+  include: {
+    Topic: {
+      select: {
+        id: true;
+        topic_name: true;
+        Subject: {
+          select: {
+            id: true;
+            subject_name: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+type QuestionDraft = {
+  topicId: number;
+  subjectId?: number;
+  gradeId?: number;
+  questionText: string;
+  questionType: QuestionType;
+  difficulty: Difficulty;
+  language: string;
+  status: QuestionStatus;
+  isActive: boolean;
+  options?: string[];
+  correctOption?: string;
+  correctAnswers?: string[];
+  explanation?: string | null;
+  imageUrl?: string | null;
 };
 
-const mapQuestion = (quiz: any) => ({
-  id: quiz.id,
-  question_text: quiz.question_text,
-  subject: quiz.Topic?.Subject?.subject_name ?? null,
-  competency: quiz.competency ?? null,
-  type: quiz.question_type ?? "multiple_choice",
-  topic: quiz.Topic?.topic_name ?? null,
-  difficulty: quiz.difficulty,
+class QuestionValidationError extends Error {}
+
+const toStringArray = (value: Prisma.JsonValue | null | undefined) => {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value
+    .map((entry) => {
+      if (typeof entry === "string") {
+        return entry.trim();
+      }
+      if (entry === null || entry === undefined) {
+        return "";
+      }
+      return String(entry).trim();
+    })
+    .filter((entry) => entry.length > 0);
+};
+
+const buildQuestionResponse = (question: QuestionWithRelations) => ({
+  id: question.id,
+  questionText: question.questionText,
+  questionType: question.questionType,
+  difficulty: question.difficulty,
+  language: question.language,
+  topicId: question.topicId,
+  topicName: question.Topic?.topic_name ?? null,
+  subjectName: question.Topic?.Subject?.subject_name ?? null,
+  status: question.status,
+  isActive: question.isActive,
+  options: toStringArray(question.options) ?? [],
+  correctOption: question.correctOption,
+  correctAnswers: toStringArray(question.correctAnswers) ?? [],
+  explanation: question.explanation,
+  imageUrl: question.imageUrl,
+  createdAt: question.createdAt,
+  updatedAt: question.updatedAt,
 });
 
-export const listQuestionBank = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { page, limit, subjectId, topicId, difficulty, search } = listQuerySchema.parse(
-      req.query,
-    );
+const buildQuestionWhere = (
+  filters: Omit<z.infer<typeof questionListQuerySchema>, "page" | "limit">,
+): Prisma.QuestionBankWhereInput => {
+  const where: Prisma.QuestionBankWhereInput = {};
 
-    const where: Prisma.QuizWhereInput = {};
-    if (subjectId) where.Topic = { is: { subject_id: subjectId } };
-    if (topicId) where.topic_id = topicId;
-    if (difficulty) where.difficulty = difficulty;
-    if (search) {
-      const term = search.trim();
-      where.OR = [
-        { question_text: { contains: term, mode: "insensitive" } },
-        { competency: { contains: term, mode: "insensitive" } },
-      ];
+  if (filters.topicId) {
+    where.topicId = filters.topicId;
+  }
+
+  if (filters.subjectId) {
+    where.Topic = { is: { subject_id: filters.subjectId } };
+  }
+
+  if (filters.difficulty) {
+    where.difficulty = filters.difficulty;
+  }
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (typeof filters.isActive === "boolean") {
+    where.isActive = filters.isActive;
+  }
+
+  if (filters.type) {
+    where.questionType = filters.type;
+  }
+
+  if (filters.language) {
+    where.language = filters.language.toUpperCase();
+  }
+
+  if (filters.search) {
+    const term = filters.search.trim();
+    where.OR = [
+      { questionText: { contains: term, mode: "insensitive" } },
+      { explanation: { contains: term, mode: "insensitive" } },
+    ];
+  }
+
+  return where;
+};
+
+const serializeJsonField = (value?: string[]) =>
+  value !== undefined ? (value as Prisma.InputJsonValue) : Prisma.JsonNull;
+
+const ensureQuestionStructure = (
+  payload: NormalizedQuestionInput,
+  existing?: QuestionWithRelations,
+): QuestionDraft => {
+  const currentOptions = existing ? toStringArray(existing.options) : undefined;
+  const currentAnswers = existing ? toStringArray(existing.correctAnswers) : undefined;
+
+  const questionType = payload.questionType ?? existing?.questionType ?? QuestionType.MULTIPLE_CHOICE;
+  const baseOptions =
+    payload.options ??
+    currentOptions ??
+    (questionType === QuestionType.TRUE_FALSE ? ["True", "False"] : undefined);
+  const baseCorrectOption =
+    payload.correctOption ??
+    existing?.correctOption ??
+    (questionType === QuestionType.TRUE_FALSE ? "TRUE" : undefined);
+  const baseCorrectAnswers = payload.correctAnswers ?? currentAnswers;
+
+  const normalizedCorrectOption =
+    questionType === QuestionType.FILL_IN_THE_BLANK || questionType === QuestionType.SHORT_ANSWER
+      ? undefined
+      : questionType === QuestionType.TRUE_FALSE
+        ? baseCorrectOption?.toUpperCase()
+        : baseCorrectOption;
+
+  const normalizedCorrectAnswers =
+    questionType === QuestionType.FILL_IN_THE_BLANK || questionType === QuestionType.SHORT_ANSWER
+      ? baseCorrectAnswers
+      : undefined;
+
+  const draft: QuestionDraft = {
+    topicId: payload.topicId ?? existing?.topicId ?? 0,
+    questionText: payload.questionText ?? existing?.questionText ?? "",
+    questionType,
+    difficulty: payload.difficulty ?? existing?.difficulty ?? Difficulty.EASY,
+    language: (payload.language ?? existing?.language ?? "EN").toUpperCase(),
+    explanation:
+      payload.explanation !== undefined ? payload.explanation : existing?.explanation ?? null,
+    imageUrl: payload.imageUrl !== undefined ? payload.imageUrl : existing?.imageUrl ?? null,
+    status: payload.status ?? existing?.status ?? QuestionStatus.ACTIVE,
+    isActive: payload.isActive ?? existing?.isActive ?? true,
+  };
+
+  if (payload.subjectId !== undefined) {
+    draft.subjectId = payload.subjectId;
+  }
+
+  if (payload.gradeId !== undefined) {
+    draft.gradeId = payload.gradeId;
+  }
+
+  if (baseOptions !== undefined) {
+    draft.options = baseOptions;
+  }
+
+  if (normalizedCorrectOption !== undefined) {
+    draft.correctOption = normalizedCorrectOption;
+  }
+
+  if (normalizedCorrectAnswers !== undefined) {
+    draft.correctAnswers = normalizedCorrectAnswers;
+  }
+
+  if (!draft.topicId) {
+    throw new QuestionValidationError("Topic is required");
+  }
+
+  if (!draft.questionText?.length) {
+    throw new QuestionValidationError("Question text is required");
+  }
+
+  const validationPayload: NormalizedQuestionInput = {
+    questionType: draft.questionType,
+  };
+  if (draft.options !== undefined) {
+    validationPayload.options = draft.options;
+  }
+  if (draft.correctOption !== undefined) {
+    validationPayload.correctOption = draft.correctOption;
+  }
+  if (draft.correctAnswers !== undefined) {
+    validationPayload.correctAnswers = draft.correctAnswers;
+  }
+
+  validateNormalizedQuestion(validationPayload);
+
+  return draft;
+};
+
+const assertTopicHierarchy = async (params: {
+  topicId: number;
+  subjectId?: number;
+  gradeId?: number;
+}) => {
+  const { topicId, subjectId, gradeId } = params;
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    select: {
+      id: true,
+      subject_id: true,
+      Subject: {
+        select: {
+          id: true,
+          grade_level_id: true,
+        },
+      },
+    },
+  });
+
+  if (!topic) {
+    throw new QuestionValidationError("Topic not found");
+  }
+
+  if (subjectId && topic.subject_id !== subjectId) {
+    throw new QuestionValidationError("Topic does not belong to the selected subject");
+  }
+
+  if (gradeId) {
+    const topicGradeId = topic.Subject?.grade_level_id ?? null;
+    if (!topicGradeId || topicGradeId !== gradeId) {
+      throw new QuestionValidationError("Topic does not belong to the selected grade");
     }
+  }
+
+  return topic;
+};
+
+export const getQuestions = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { page, limit, ...filters } = questionListQuerySchema.parse(req.query);
+    const where = buildQuestionWhere(filters);
 
     const [total, questions] = await Promise.all([
-      prisma.quiz.count({ where }),
-      prisma.quiz.findMany({
+      prisma.questionBank.count({ where }),
+      prisma.questionBank.findMany({
         where,
-        include: includeTopic,
-        orderBy: { created_at: "desc" },
+        include: questionInclude,
+        orderBy: { updatedAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -92,153 +321,541 @@ export const listQuestionBank = async (req: Request, res: Response, next: NextFu
 
     return res.json({
       success: true,
-      data: { questions: questions.map(mapQuestion) },
-      pagination: { page, limit, total },
+      data: {
+        questions: questions.map(buildQuestionResponse),
+        pagination: { page, limit, total },
+      },
     });
   } catch (error) {
+    if (error instanceof QuestionValidationError) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-export const getQuestionBankItem = async (req: Request, res: Response, next: NextFunction) => {
+export const getQuestion = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = questionIdSchema.parse(req.params);
-    const quiz = await prisma.quiz.findUnique({
+    const question = await prisma.questionBank.findUnique({
       where: { id },
-      include: includeTopic,
+      include: questionInclude,
     });
 
-    if (!quiz) {
+    if (!question) {
       return res.status(404).json({ success: false, message: "Question not found" });
     }
 
-    return res.json({ success: true, data: { question: quiz } });
+    return res.json({ success: true, data: { question: buildQuestionResponse(question) } });
+  } catch (error) {
+    if (error instanceof QuestionValidationError) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+export const createQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = createQuestionSchema.parse(req.body);
+    const normalized = normalizeQuestionPayload(parsed);
+    const draft = ensureQuestionStructure({
+      ...normalized,
+      topicId: parsed.topicId,
+      questionText: normalized.questionText ?? parsed.questionText,
+    });
+
+    const hierarchyPayload: { topicId: number; subjectId?: number; gradeId?: number } = {
+      topicId: draft.topicId,
+    };
+    if (parsed.subjectId !== undefined) {
+      hierarchyPayload.subjectId = parsed.subjectId;
+    }
+    if (parsed.gradeId !== undefined) {
+      hierarchyPayload.gradeId = parsed.gradeId;
+    }
+    await assertTopicHierarchy(hierarchyPayload);
+
+    const question = await prisma.questionBank.create({
+      data: {
+        topicId: draft.topicId,
+        questionText: draft.questionText,
+        questionType: draft.questionType,
+        options: serializeJsonField(draft.options),
+        correctOption: draft.correctOption ?? null,
+        correctAnswers: serializeJsonField(draft.correctAnswers),
+        difficulty: draft.difficulty,
+        language: draft.language,
+        explanation: draft.explanation ?? null,
+        imageUrl: draft.imageUrl ?? null,
+        isActive: draft.isActive,
+        status: draft.status,
+        createdById: req.user?.id ?? null,
+      },
+      include: questionInclude,
+    });
+
+    await recordAdminAction(req.user?.id, "QuestionBank", "CREATE", question.id, question.questionText);
+
+    return res.status(201).json({ success: true, data: { question: buildQuestionResponse(question) } });
+  } catch (error) {
+    if (error instanceof QuestionValidationError) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+export const updateQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = questionIdSchema.parse(req.params);
+    const payload = updateQuestionSchema.parse(req.body);
+    const normalized = normalizeQuestionPayload(payload);
+
+    const existing = await prisma.questionBank.findUnique({
+      where: { id },
+      include: questionInclude,
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Question not found" });
+    }
+
+    const draft = ensureQuestionStructure(normalized, existing);
+
+    const question = await prisma.questionBank.update({
+      where: { id },
+      data: {
+        topicId: draft.topicId,
+        questionText: draft.questionText,
+        questionType: draft.questionType,
+        options: serializeJsonField(draft.options),
+        correctOption: draft.correctOption ?? null,
+        correctAnswers: serializeJsonField(draft.correctAnswers),
+        difficulty: draft.difficulty,
+        language: draft.language,
+        explanation: draft.explanation ?? null,
+        imageUrl: draft.imageUrl ?? null,
+        isActive: draft.isActive,
+        status: draft.status,
+      },
+      include: questionInclude,
+    });
+
+    await recordAdminAction(req.user?.id, "QuestionBank", "UPDATE", id, draft.questionText);
+
+    return res.json({ success: true, data: { question: buildQuestionResponse(question) } });
+  } catch (error) {
+    if (error instanceof QuestionValidationError) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+export const deactivateQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = questionIdSchema.parse(req.params);
+    const question = await prisma.questionBank.update({
+      where: { id },
+      data: { isActive: false, status: QuestionStatus.INACTIVE },
+    });
+
+    await recordAdminAction(req.user?.id, "QuestionBank", "DEACTIVATE", id, question.questionText);
+
+    return res.json({ success: true, data: { message: "Question deactivated" } });
+  } catch (error) {
+    if (error instanceof QuestionValidationError) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+export const reactivateQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = questionIdSchema.parse(req.params);
+    const question = await prisma.questionBank.update({
+      where: { id },
+      data: { isActive: true, status: QuestionStatus.ACTIVE },
+    });
+
+    await recordAdminAction(req.user?.id, "QuestionBank", "REACTIVATE", id, question.questionText);
+
+    return res.json({ success: true, data: { message: "Question reactivated" } });
   } catch (error) {
     next(error);
   }
 };
 
-export const createQuestionBankItem = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const payload = questionSchema.parse(req.body);
+const parseCsvBuffer = (buffer: Buffer) => {
+  const parsed = Papa.parse(buffer.toString("utf-8"), {
+    header: true,
+    skipEmptyLines: true,
+  });
 
-    const quiz = await prisma.quiz.create({
-      data: {
-        topic_id: payload.topicId,
-        question_text: payload.questionText,
-        option_a: payload.optionA,
-        option_b: payload.optionB,
-        option_c: payload.optionC,
-        option_d: payload.optionD,
-        correct_option: payload.correctOption,
-        difficulty: payload.difficulty,
-        xp_reward: payload.xpReward ?? 0,
-        question_type: payload.questionType ?? null,
-        competency: payload.competency ?? null,
-        is_premium: payload.isPremium ?? false,
+  return (parsed.data as Record<string, string>[]) ?? [];
+};
+
+const parseXlsxBuffer = async (buffer: Buffer) => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+  const worksheet = workbook.worksheets[0];
+
+  if (!worksheet) {
+    return [];
+  }
+
+  const headers: string[] = [];
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    const value = cell.value;
+    const header = typeof value === "string" ? value.trim() : String(value ?? "").trim();
+    if (header.length) {
+      headers[colNumber - 1] = header;
+    }
+  });
+
+  const rows: Record<string, string>[] = [];
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) {
+      return;
+    }
+
+    const record: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      if (!header) {
+        return;
+      }
+      const cell = row.getCell(index + 1);
+      const cellValue = cell.value;
+      record[header] = typeof cellValue === "string" ? cellValue : String(cellValue ?? "");
+    });
+    rows.push(record);
+  });
+
+  return rows;
+};
+
+const normalizeImportRow = (row: Record<string, string>) => {
+  const optionKeys = ["optionA", "optionB", "optionC", "optionD", "optionE", "optionF"];
+  const inlineOptions = optionKeys
+    .map((key) => row[key] ?? row[key.toLowerCase()])
+    .filter((value) => value && value.length);
+
+  return {
+    topicId: row.topicId ?? row.topic_id,
+    subjectId: row.subjectId ?? row.subject_id,
+    gradeId: row.gradeId ?? row.grade_id,
+    questionText: row.questionText ?? row.question ?? row.question_text,
+    questionType: (row.questionType ?? row.question_type ?? "MULTIPLE_CHOICE")
+      .toUpperCase()
+      .replace(/-/g, "_"),
+    options: row.options ?? (inlineOptions.length ? inlineOptions.join("|") : undefined),
+    correctOption: row.correctOption ?? row.correct_option,
+    correctAnswers: row.correctAnswers ?? row.correct_answers,
+    difficulty: (row.difficulty ?? "EASY").toUpperCase(),
+    language: row.language,
+    explanation: row.explanation ?? row.rationale,
+  };
+};
+
+export const importQuestions = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Upload a CSV or XLSX file" });
+    }
+
+    const extension = req.file.originalname.split(".").pop()?.toLowerCase();
+    const isXlsx = extension === "xlsx";
+
+    const rawRows = isXlsx
+      ? await parseXlsxBuffer(req.file.buffer)
+      : parseCsvBuffer(req.file.buffer);
+
+    if (!rawRows.length) {
+      return res.status(400).json({ success: false, message: "Import file is empty" });
+    }
+
+    let failed = 0;
+    const parsedRows: QuestionDraft[] = [];
+
+    rawRows.forEach((row) => {
+      const normalizedRow = normalizeImportRow(row);
+      const parsed = importQuestionRowSchema.safeParse(normalizedRow);
+      if (!parsed.success) {
+        failed += 1;
+        return;
+      }
+
+      try {
+        const normalized = normalizeQuestionPayload(parsed.data);
+        const draft = ensureQuestionStructure({
+          ...normalized,
+          topicId: parsed.data.topicId,
+          questionText: normalized.questionText ?? parsed.data.questionText,
+        });
+        if (parsed.data.subjectId !== undefined) {
+          draft.subjectId = parsed.data.subjectId;
+        }
+        if (parsed.data.gradeId !== undefined) {
+          draft.gradeId = parsed.data.gradeId;
+        }
+        parsedRows.push(draft);
+      } catch {
+        failed += 1;
+      }
+    });
+
+    if (!parsedRows.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid rows detected after validation",
+        data: { imported: 0, skipped: 0, failed },
+      });
+    }
+
+    const topicIds = Array.from(new Set(parsedRows.map((row) => row.topicId)));
+    const topics = await prisma.topic.findMany({
+      where: { id: { in: topicIds } },
+      select: {
+        id: true,
+        subject_id: true,
+        Subject: {
+          select: { grade_level_id: true },
+        },
       },
     });
-
-    await recordAdminAction(req.user?.id, "Question", "CREATE", quiz.id, quiz.question_text);
-
-    return res.status(201).json({ success: true, data: { question: quiz } });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateQuestionBankItem = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { id } = questionIdSchema.parse(req.params);
-    const payload = updateSchema.parse(req.body);
-
-    const data: Prisma.QuizUncheckedUpdateInput = {};
-    if (payload.topicId !== undefined) data.topic_id = payload.topicId;
-    if (payload.questionText !== undefined) data.question_text = payload.questionText;
-    if (payload.optionA !== undefined) data.option_a = payload.optionA;
-    if (payload.optionB !== undefined) data.option_b = payload.optionB;
-    if (payload.optionC !== undefined) data.option_c = payload.optionC;
-    if (payload.optionD !== undefined) data.option_d = payload.optionD;
-    if (payload.correctOption !== undefined) data.correct_option = payload.correctOption;
-    if (payload.difficulty !== undefined) data.difficulty = payload.difficulty;
-    if (payload.xpReward !== undefined) data.xp_reward = payload.xpReward;
-    if (payload.questionType !== undefined) data.question_type = payload.questionType ?? null;
-    if (payload.competency !== undefined) data.competency = payload.competency ?? null;
-    if (payload.isPremium !== undefined) data.is_premium = payload.isPremium;
-
-    const quiz = await prisma.quiz.update({
-      where: { id },
-      data,
+    const topicMeta = new Map<
+      number,
+      { subjectId: number | null; gradeLevelId: number | null }
+    >();
+    topics.forEach((topic) => {
+      topicMeta.set(topic.id, {
+        subjectId: topic.subject_id,
+        gradeLevelId: topic.Subject?.grade_level_id ?? null,
+      });
     });
 
-    await recordAdminAction(req.user?.id, "Question", "UPDATE", id, quiz.question_text);
+    const deduped: typeof parsedRows = [];
+    const seen = new Set<string>();
+    let skipped = 0;
 
-    return res.json({ success: true, data: { question: quiz } });
-  } catch (error) {
-    next(error);
-  }
-};
+    parsedRows.forEach((row) => {
+      const meta = topicMeta.get(row.topicId!);
+      if (!meta) {
+        failed += 1;
+        return;
+      }
 
-export const deleteQuestionBankItem = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { id } = questionIdSchema.parse(req.params);
-    const deleted = await prisma.quiz.delete({ where: { id } });
-    await recordAdminAction(req.user?.id, "Question", "DELETE", id, deleted.question_text);
-    return res.json({ success: true, message: "Question deleted" });
-  } catch (error) {
-    next(error);
-  }
-};
+      if (row.subjectId && meta.subjectId !== row.subjectId) {
+        failed += 1;
+        return;
+      }
 
-export const bulkImportQuestions = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { questions } = bulkSchema.parse(req.body);
-    const data = questions.map((question) => ({
-      topic_id: question.topicId,
-      question_text: question.questionText,
-      option_a: question.optionA,
-      option_b: question.optionB,
-      option_c: question.optionC,
-      option_d: question.optionD,
-      correct_option: question.correctOption,
-      difficulty: question.difficulty,
-      xp_reward: question.xpReward ?? 0,
-      question_type: question.questionType ?? null,
-      competency: question.competency ?? null,
-      is_premium: question.isPremium ?? false,
-    }));
+      if (row.gradeId) {
+        if (!meta.gradeLevelId || meta.gradeLevelId !== row.gradeId) {
+          failed += 1;
+          return;
+        }
+      }
 
-    const result = await prisma.quiz.createMany({ data });
+      const key = `${row.topicId}|${row.questionText?.toLowerCase()}`;
+      if (seen.has(key)) {
+        skipped += 1;
+        return;
+      }
+
+      seen.add(key);
+      deduped.push(row);
+    });
+
+    if (!deduped.length) {
+      return res.json({
+        success: true,
+        message: "Import completed",
+        data: { imported: 0, skipped, failed },
+      });
+    }
+
+    const duplicates = await prisma.questionBank.findMany({
+      where: {
+        OR: deduped.map((row) => ({
+          topicId: row.topicId!,
+          questionText: { equals: row.questionText!, mode: "insensitive" },
+        })),
+      },
+      select: { topicId: true, questionText: true },
+    });
+
+    const duplicateKeys = new Set(
+      duplicates.map((record) => `${record.topicId}|${record.questionText.toLowerCase()}`),
+    );
+
+    const rowsToInsert = deduped.filter((row) => {
+      const key = `${row.topicId}|${row.questionText?.toLowerCase()}`;
+      if (duplicateKeys.has(key)) {
+        skipped += 1;
+        return false;
+      }
+      return true;
+    });
+
+    if (!rowsToInsert.length) {
+      return res.json({
+        success: true,
+        message: "Import completed",
+        data: { imported: 0, skipped, failed },
+      });
+    }
+
+    const createResult = await prisma.questionBank.createMany({
+      data: rowsToInsert.map((row) => ({
+        topicId: row.topicId!,
+        questionText: row.questionText!,
+        questionType: row.questionType,
+        options: serializeJsonField(row.options),
+        correctOption: row.correctOption ?? null,
+        correctAnswers: serializeJsonField(row.correctAnswers),
+        difficulty: row.difficulty,
+        language: row.language,
+        explanation: row.explanation ?? null,
+        imageUrl: row.imageUrl ?? null,
+        isActive: row.isActive,
+        status: row.status,
+        createdById: req.user?.id ?? null,
+      })),
+    });
 
     await recordAdminAction(
       req.user?.id,
-      "Question",
-      "BULK_CREATE",
+      "QuestionBank",
+      "IMPORT",
       undefined,
-      `Imported ${result.count} questions`,
+      `Imported ${createResult.count} questions`,
     );
 
-    return res.status(201).json({
+    return res.json({
       success: true,
-      data: { inserted: result.count },
-      message: "Question bank import completed",
+      message: "Question import completed",
+      data: { imported: createResult.count, skipped, failed },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const exportColumns = [
+  { header: "ID", key: "id", width: 10 },
+  { header: "Question", key: "question", width: 60 },
+  { header: "Type", key: "type", width: 20 },
+  { header: "Difficulty", key: "difficulty", width: 14 },
+  { header: "Language", key: "language", width: 12 },
+  { header: "Topic ID", key: "topicId", width: 12 },
+  { header: "Topic", key: "topic", width: 32 },
+  { header: "Subject", key: "subject", width: 32 },
+  { header: "Active", key: "active", width: 10 },
+  { header: "Status", key: "status", width: 14 },
+  { header: "Options", key: "options", width: 40 },
+  { header: "Correct Option", key: "correctOption", width: 18 },
+  { header: "Correct Answers", key: "correctAnswers", width: 28 },
+  { header: "Explanation", key: "explanation", width: 50 },
+];
+
+const exportHeaders = exportColumns.map((column) => column.header);
+
+const formatQuestionRow = (question: QuestionWithRelations) => ({
+  id: question.id,
+  question: question.questionText,
+  type: question.questionType,
+  difficulty: question.difficulty,
+  language: question.language,
+  topicId: question.topicId,
+  topic: question.Topic?.topic_name ?? "",
+  subject: question.Topic?.Subject?.subject_name ?? "",
+  active: question.isActive ? "Yes" : "No",
+  status: question.status,
+  options: (toStringArray(question.options) ?? []).join(" | "),
+  correctOption: question.correctOption ?? "",
+  correctAnswers: (toStringArray(question.correctAnswers) ?? []).join(" | "),
+  explanation: question.explanation ?? "",
+});
+
+export const exportQuestions = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params = exportQuerySchema.parse(req.query);
+    const where = buildQuestionWhere(params);
+
+    const questions = await prisma.questionBank.findMany({
+      where,
+      include: questionInclude,
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const rows = questions.map(formatQuestionRow);
+
+    if (params.format === "csv") {
+      const csv = Papa.unparse({
+        fields: exportHeaders,
+        data: rows.map((row) =>
+          exportColumns.map((column) => row[column.key as keyof typeof row] ?? ""),
+        ),
+      });
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="question-bank.csv"');
+      return res.status(200).send(csv);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("QuestionBank");
+    sheet.columns = exportColumns;
+    rows.forEach((row) => sheet.addRow(row));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="question-bank.xlsx"');
+    return res.status(200).send(Buffer.from(buffer));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadQuestionTemplate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { format } = templateQuerySchema.parse(req.query);
+
+    if (format === "csv") {
+      const csv = `${questionTemplateHeaders.join(",")}\n`;
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="question-bank-template.csv"',
+      );
+      return res.status(200).send(csv);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Template");
+    sheet.addRow(questionTemplateHeaders);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="question-bank-template.xlsx"',
+    );
+    return res.status(200).send(Buffer.from(buffer));
   } catch (error) {
     next(error);
   }

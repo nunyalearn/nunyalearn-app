@@ -26,7 +26,7 @@ const navItems = [
   { href: "/curriculum", label: "Curriculum", icon: GraduationCap },
   { href: "/flashcards", label: "Flashcards", icon: BookOpen },
   { href: "/quizzes", label: "Quizzes", icon: ListTree },
-  { href: "/practice", label: "Practice Tests", icon: ShieldCheck },
+  { href: "/practice-tests", label: "Practice Tests", icon: ShieldCheck },
   { href: "/questionbank", label: "Question Bank", icon: Layers3 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/gamification", label: "Gamification", icon: Trophy },

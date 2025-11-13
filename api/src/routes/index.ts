@@ -8,6 +8,7 @@ import progressRoutes from "./progressRoutes";
 import leaderboardRoutes from "./leaderboardRoutes";
 import challengeRoutes from "./challengeRoutes";
 import xpHistoryRoutes from "./xpHistoryRoutes";
+import curriculumRoutes from "./curriculumRoutes";
 import badgeAdminRoutes from "./admin/badgeAdminRoutes";
 import achievementAdminRoutes from "./admin/achievementAdminRoutes";
 import challengeAdminRoutes from "./admin/challengeAdminRoutes";
@@ -28,6 +29,7 @@ import settingsAdminRoutes from "./admin/settingsAdminRoutes";
 import gradeLevelAdminRoutes from "./admin/gradeLevelAdminRoutes";
 import subjectAdminRoutes from "./admin/subjectAdminRoutes";
 import topicAdminRoutes from "./admin/topicAdminRoutes";
+import adminCurriculumRoutes from "./admin/curriculumRoutes";
 
 const router = Router();
 
@@ -44,10 +46,12 @@ router.use("/progress", progressRoutes);
 router.use("/leaderboard", leaderboardRoutes);
 router.use("/challenges", challengeRoutes);
 router.use("/xp-history", xpHistoryRoutes);
+router.use("/curriculum", curriculumRoutes);
 router.use("/admin/users", userAdminRoutes);
 router.use("/admin/grades", gradeLevelAdminRoutes);
 router.use("/admin/subjects", subjectAdminRoutes);
 router.use("/admin/topics", topicAdminRoutes);
+router.use("/admin/curriculum", adminCurriculumRoutes);
 router.use("/admin/badges", badgeAdminRoutes);
 router.use("/admin/achievements", achievementAdminRoutes);
 router.use("/admin/challenges", challengeAdminRoutes);

@@ -32,9 +32,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Normalize token extraction so every caller honors the backend response contract.
   const resolveResponseToken = (payload: unknown): string | null => {
-    const data = (payload as any)?.data;
-    const nestedData = data?.data;
-    return nestedData?.token ?? nestedData?.accessToken ?? data?.token ?? null;
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+
+    const rootData = (payload as { data?: unknown }).data;
+
+    const extractToken = (value: unknown): string | null => {
+      if (!value || typeof value !== "object") {
+        return null;
+      }
+      const container = value as { token?: unknown; accessToken?: unknown; data?: unknown };
+      const directToken =
+        (typeof container.token === "string" && container.token) ||
+        (typeof container.accessToken === "string" && container.accessToken) ||
+        null;
+      if (directToken) {
+        return directToken;
+      }
+      return extractToken(container.data);
+    };
+
+    return extractToken(rootData ?? payload);
   };
 
   const loadProfile = useCallback(

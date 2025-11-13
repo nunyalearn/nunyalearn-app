@@ -45,7 +45,7 @@ export const getQuizzes = async (req: Request, res: Response, next: NextFunction
     const query = quizQuerySchema.parse(req.query);
     const { topic_id, page, limit, random } = query;
 
-    const where: Prisma.QuizWhereInput = {
+    const where: Prisma.LegacyQuizWhereInput = {
       topic_id,
     };
 
@@ -55,8 +55,8 @@ export const getQuizzes = async (req: Request, res: Response, next: NextFunction
     }
 
     const [total, quizzes] = await Promise.all([
-      prisma.quiz.count({ where }),
-      prisma.quiz.findMany({
+      prisma.legacyQuiz.count({ where }),
+      prisma.legacyQuiz.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
@@ -96,7 +96,7 @@ export const submitAttempt = async (req: Request, res: Response, next: NextFunct
 
     const payload = attemptSchema.parse(req.body);
 
-    const quiz = await prisma.quiz.findUnique({
+    const quiz = await prisma.legacyQuiz.findUnique({
       where: { id: payload.quizId },
       include: { Topic: true },
     });
@@ -145,7 +145,7 @@ export const submitAttempt = async (req: Request, res: Response, next: NextFunct
         },
       });
 
-      const totalQuizzes = await tx.quiz.count({
+      const totalQuizzes = await tx.legacyQuiz.count({
         where: { topic_id: quiz.topic_id },
       });
 
@@ -153,7 +153,7 @@ export const submitAttempt = async (req: Request, res: Response, next: NextFunct
         where: {
           user_id: req.user!.id,
           is_correct: true,
-          Quiz: { topic_id: quiz.topic_id },
+          LegacyQuiz: { topic_id: quiz.topic_id },
         },
       });
 

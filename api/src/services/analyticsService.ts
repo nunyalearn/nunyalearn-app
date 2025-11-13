@@ -54,7 +54,7 @@ export const getQuizAttempts = async (filter: AttemptFilter = {}) => {
   }
 
   if (filter.subjectId) {
-    where.Quiz = {
+    where.LegacyQuiz = {
       is: {
         Topic: {
           subject_id: filter.subjectId,
@@ -80,7 +80,7 @@ export const getQuizAttempts = async (filter: AttemptFilter = {}) => {
         User: {
           select: { id: true, full_name: true, email: true },
         },
-        Quiz: {
+        LegacyQuiz: {
           select: {
             id: true,
             question_text: true,
@@ -107,19 +107,19 @@ export const getQuizAttempts = async (filter: AttemptFilter = {}) => {
     attemptDate: attempt.attempt_date,
     user: attempt.User,
     quiz: {
-      id: attempt.Quiz.id,
-      question: attempt.Quiz.question_text,
+      id: attempt.LegacyQuiz.id,
+      question: attempt.LegacyQuiz.question_text,
     },
-    topic: attempt.Quiz.Topic
+    topic: attempt.LegacyQuiz.Topic
       ? {
-        id: attempt.Quiz.Topic.id,
-        name: attempt.Quiz.Topic.topic_name,
+        id: attempt.LegacyQuiz.Topic.id,
+        name: attempt.LegacyQuiz.Topic.topic_name,
       }
       : null,
-    subject: attempt.Quiz.Topic?.Subject
+    subject: attempt.LegacyQuiz.Topic?.Subject
       ? {
-        id: attempt.Quiz.Topic.Subject.id,
-        name: attempt.Quiz.Topic.Subject.subject_name,
+        id: attempt.LegacyQuiz.Topic.Subject.id,
+        name: attempt.LegacyQuiz.Topic.Subject.subject_name,
       }
       : null,
   }));
@@ -343,7 +343,7 @@ export const getAttemptsForExport = async (filter: AttemptExportFilter = {}) => 
   const where: Prisma.AttemptWhereInput = {};
 
   if (filter.subjectId) {
-    where.Quiz = {
+    where.LegacyQuiz = {
       is: {
         Topic: {
           subject_id: filter.subjectId,
@@ -436,7 +436,7 @@ export const getKpiTotals = async () => {
     prisma.user.count(),
     prisma.badge.count(),
     prisma.challenge.count(),
-    prisma.quiz.count(),
+    prisma.legacyQuiz.count(),
   ]);
 
   return {

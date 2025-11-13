@@ -2,11 +2,11 @@ import { Router } from "express";
 import { Role } from "@prisma/client";
 import {
   createPracticeTest,
-  deletePracticeTest,
-  getPracticeTestById,
+  getPracticeTestDetail,
   listPracticeTests,
   updatePracticeTest,
-} from "../../controllers/admin/adminPracticeTestController";
+  updatePracticeTestStatus,
+} from "../../controllers/admin/practiceTestAdminController";
 import { verifyToken } from "../../middlewares/verifyToken";
 import { verifyRole } from "../../middlewares/verifyRole";
 
@@ -15,9 +15,9 @@ const router = Router();
 router.use(verifyToken, verifyRole(Role.ADMIN));
 
 router.get("/", listPracticeTests);
-router.get("/:id", getPracticeTestById);
+router.get("/:id", getPracticeTestDetail);
 router.post("/", createPracticeTest);
 router.put("/:id", updatePracticeTest);
-router.delete("/:id", deletePracticeTest);
+router.patch("/:id/status", updatePracticeTestStatus);
 
 export default router;

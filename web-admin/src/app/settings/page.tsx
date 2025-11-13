@@ -17,13 +17,15 @@ type SettingsPayload = {
 
 const SettingsPage = () => {
   const { data, mutate } = useSWR<SettingsPayload>("/admin/settings", fetcher);
-  const [form, setForm] = useState<SettingsPayload>({});
+  const [form, setForm] = useState<SettingsPayload>(() => data ?? {});
   const { toast } = useToast();
 
   useEffect(() => {
-    if (data) {
-      setForm(data);
+    if (!data) {
+      return;
     }
+    const id = requestAnimationFrame(() => setForm(data));
+    return () => cancelAnimationFrame(id);
   }, [data]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

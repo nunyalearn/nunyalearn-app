@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { Role } from "@prisma/client";
 import {
-  createAdminQuiz,
-  deleteAdminQuiz,
-  getAdminQuiz,
-  listAdminQuizzes,
-  updateAdminQuiz,
-} from "../../controllers/admin/adminQuizController";
+  createQuiz,
+  getQuizDetail,
+  listQuizzesByTopic,
+  updateQuiz,
+  updateQuizStatus,
+} from "../../controllers/admin/quizAdminController";
 import { verifyToken } from "../../middlewares/verifyToken";
 import { verifyRole } from "../../middlewares/verifyRole";
 
@@ -14,10 +14,10 @@ const router = Router();
 
 router.use(verifyToken, verifyRole(Role.ADMIN));
 
-router.get("/", listAdminQuizzes);
-router.get("/:id", getAdminQuiz);
-router.post("/", createAdminQuiz);
-router.put("/:id", updateAdminQuiz);
-router.delete("/:id", deleteAdminQuiz);
+router.get("/", listQuizzesByTopic);
+router.get("/:id", getQuizDetail);
+router.post("/", createQuiz);
+router.put("/:id", updateQuiz);
+router.patch("/:id/status", updateQuizStatus);
 
 export default router;

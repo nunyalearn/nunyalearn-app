@@ -76,21 +76,52 @@ const normalizeCsvRows = (rows: Record<string, string>[]) => {
     .filter((row) => row.fullName && row.email && row.password);
 };
 
-const extractUsers = (raw: any): AdminUser[] => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback = "Please try again.") => {
+  if (!error) {
+    return fallback;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  const responseData = (error as { response?: { data?: unknown } })?.response?.data;
+  if (isRecord(responseData)) {
+    const { message, error: nestedError } = responseData as { message?: unknown; error?: unknown };
+    if (typeof message === "string") {
+      return message;
+    }
+    if (typeof nestedError === "string") {
+      return nestedError;
+    }
+  }
+  const fallbackMessage = (error as { message?: unknown }).message;
+  return typeof fallbackMessage === "string" ? fallbackMessage : fallback;
+};
+
+const extractUsers = (raw: unknown): AdminUser[] => {
   if (!raw) {
     return [];
   }
   if (Array.isArray(raw)) {
-    return raw;
+    return raw as AdminUser[];
   }
-  if (raw.data) {
-    const payload = raw.data;
-    if (Array.isArray(payload)) {
-      return payload;
+  if (isRecord(raw)) {
+    if (Array.isArray(raw.data)) {
+      return raw.data as AdminUser[];
     }
-    return payload.users ?? [];
+    if (isRecord(raw.data) && Array.isArray((raw.data as { users?: AdminUser[] }).users)) {
+      return (raw.data as { users?: AdminUser[] }).users ?? [];
+    }
+    if (Array.isArray((raw as { users?: AdminUser[] }).users)) {
+      return (raw as { users?: AdminUser[] }).users ?? [];
+    }
   }
-  return raw.users ?? [];
+  return [];
 };
 
 const UsersPage = () => {
@@ -118,10 +149,7 @@ const UsersPage = () => {
   }, [searchInput]);
 
   const query = appliedSearch ? `?search=${encodeURIComponent(appliedSearch)}` : "";
-  const { data, error, isLoading, mutate } = useSWR(`/admin/users${query}`, fetcher, {
-  onError: (err) => console.error("SWR fetch error:", err),
-  });  
-  console.log("SWR data payload:", data, "Error:", error);
+  const { data, isLoading, mutate } = useSWR(`/admin/users${query}`, fetcher);
   const users = useMemo(() => extractUsers(data), [data]);
 
   const userColumns: TableColumn<AdminUser>[] = useMemo(
@@ -173,11 +201,11 @@ const UsersPage = () => {
       setDialogOpen(false);
       setNewUser({ fullName: "", email: "", password: "", role: "USER", isPremium: false });
       mutate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Unable to create user",
-        description: error?.response?.data?.message ?? "Please try again.",
+        description: getErrorMessage(error),
       });
     } finally {
       setCreating(false);
@@ -189,11 +217,11 @@ const UsersPage = () => {
     try {
       await downloadFile(`/admin/users/export.csv${query}`, "users.csv");
       toast({ title: "Export started" });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Export failed",
-        description: error?.response?.data?.message ?? "Please try again.",
+        description: getErrorMessage(error),
       });
     } finally {
       setExporting(false);
@@ -226,11 +254,11 @@ const UsersPage = () => {
       await api.post("/admin/users/import", { users: normalized });
       toast({ title: "Import completed" });
       mutate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Import failed",
-        description: error?.response?.data?.message ?? "Please review your CSV and try again.",
+        description: getErrorMessage(error, "Please review your CSV and try again."),
       });
     } finally {
       setImporting(false);

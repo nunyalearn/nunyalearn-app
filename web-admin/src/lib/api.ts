@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
 export const TOKEN_STORAGE_KEY = "nunyalearn:admin-token";
@@ -29,10 +29,13 @@ api.interceptors.request.use((config) => {
   // Ensure every admin request automatically carries the latest persisted Bearer token.
   const token = getStoredToken();
   if (token) {
-    config.headers = {
-      ...config.headers,
-      Authorization: `Bearer ${token}`,
-    };
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    } else {
+      const headers = AxiosHeaders.from(config.headers ?? {});
+      headers.set("Authorization", `Bearer ${token}`);
+      config.headers = headers;
+    }
   }
   return config;
 });

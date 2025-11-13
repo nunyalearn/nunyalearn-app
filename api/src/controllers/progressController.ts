@@ -37,9 +37,9 @@ const buildProgressWhere = (
 
 const createTopicSummary = async (userId: number, topicId: number) => {
   const [totalQuizzes, completedQuizzes] = await Promise.all([
-    prisma.quiz.count({ where: { topic_id: topicId } }),
+    prisma.legacyQuiz.count({ where: { topic_id: topicId } }),
     prisma.attempt.count({
-      where: { user_id: userId, is_correct: true, Quiz: { topic_id: topicId } },
+      where: { user_id: userId, is_correct: true, LegacyQuiz: { topic_id: topicId } },
     }),
   ]);
 

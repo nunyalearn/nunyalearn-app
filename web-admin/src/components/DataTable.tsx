@@ -18,7 +18,7 @@ type DataTableProps<T> = {
   emptyLabel?: string;
 };
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   columns,
   data = [],
   isLoading,
@@ -30,7 +30,7 @@ export function DataTable<T extends Record<string, any>>({
   const filtered = useMemo(() => {
     if (!query.trim()) return data;
     return data.filter((row) =>
-      Object.values(row ?? {}).some((value) =>
+      Object.values(row).some((value) =>
         String(value ?? "")
           .toLowerCase()
           .includes(query.toLowerCase()),

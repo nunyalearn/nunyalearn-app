@@ -17,10 +17,11 @@ import Loader from "@/components/Loader";
 import { DataTable } from "@/components/DataTable";
 import { fetcher } from "@/lib/api";
 
-type Attempt = {
+type AttemptRecord = {
   id: number;
   score: number;
-  attemptDate: string;
+  attemptDate?: string;
+  attempt_date?: string;
   user?: { full_name?: string };
 };
 
@@ -31,16 +32,26 @@ type ProgressSummary = {
   quizzesCompleted: number;
 };
 
+const formatDateTime = (value?: string) => (value ? new Date(value).toLocaleString() : "—");
+
+const normalizeAttempt = (attempt: AttemptRecord) => {
+  const rawDate = attempt.attemptDate ?? attempt.attempt_date;
+  return {
+    ...attempt,
+    attemptDate: rawDate ? new Date(rawDate).toLocaleDateString() : "—",
+  };
+};
+
 const AnalyticsPage = () => {
-  const { data: attemptsData, isLoading: attemptsLoading } = useSWR<Attempt[] | { attempts?: Attempt[] }>(
-    "/admin/reporting/attempts?limit=25",
-    fetcher,
-  );
-  const { data: progressData, isLoading: progressLoading } = useSWR<ProgressSummary[] | { subjects?: ProgressSummary[] }>(
-    "/admin/reporting/progress",
-    fetcher,
-  );
-  const attempts = Array.isArray(attemptsData) ? attemptsData : attemptsData?.attempts ?? [];
+  const { data: attemptsData, isLoading: attemptsLoading } = useSWR<
+    AttemptRecord[] | { attempts?: AttemptRecord[] }
+  >("/admin/reporting/attempts?limit=25", fetcher);
+  const { data: progressData, isLoading: progressLoading } = useSWR<
+    ProgressSummary[] | { subjects?: ProgressSummary[] }
+  >("/admin/reporting/progress", fetcher);
+
+  const attemptsSource = Array.isArray(attemptsData) ? attemptsData : attemptsData?.attempts ?? [];
+  const attempts = attemptsSource.map(normalizeAttempt);
   const progress = Array.isArray(progressData) ? progressData : progressData?.subjects ?? [];
 
   return (
@@ -56,15 +67,7 @@ const AnalyticsPage = () => {
             <Loader />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={attempts.map((attempt) => {
-                  const date = attempt.attemptDate ?? (attempt as any).attempt_date;
-                  return {
-                    ...attempt,
-                    attemptDate: date ? new Date(date).toLocaleDateString() : "—",
-                  };
-                })}
-              >
+              <AreaChart data={attempts}>
                 <defs>
                   <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#007a3e" stopOpacity={0.8} />
@@ -103,16 +106,13 @@ const AnalyticsPage = () => {
           {
             key: "attemptDate",
             label: "Date",
-            render: (row) => {
-              const date = row.attemptDate ?? (row as any).attempt_date;
-              return date ? new Date(date).toLocaleString() : "—";
-            },
+            render: (row: AttemptRecord) => formatDateTime(row.attemptDate ?? row.attempt_date),
           },
           { key: "score", label: "Score" },
           {
             key: "user",
             label: "Learner",
-            render: (row) => row.user?.full_name ?? "—",
+            render: (row: AttemptRecord) => row.user?.full_name ?? "—",
           },
         ]}
         data={attempts}

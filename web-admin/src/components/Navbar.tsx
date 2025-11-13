@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, Moon, Search, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,14 +14,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 
+const getInitialTheme = (): "light" | "dark" => {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+};
+
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
-  }, []);
+  const [theme, setTheme] = useState<"light" | "dark">(() => getInitialTheme());
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle("dark");

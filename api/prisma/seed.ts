@@ -97,7 +97,7 @@ const ensureQuiz = async (
   options: { a: string; b: string; c: string; d: string },
   xp = 10,
 ) => {
-  const existing = await prisma.quiz.findFirst({
+  const existing = await prisma.legacyQuiz.findFirst({
     where: { question_text: question },
   });
 
@@ -105,7 +105,7 @@ const ensureQuiz = async (
     return existing;
   }
 
-  return prisma.quiz.create({
+  return prisma.legacyQuiz.create({
     data: {
       topic_id: topicId,
       question_text: question,
@@ -123,8 +123,8 @@ const ensureQuiz = async (
   });
 };
 
-const seedPracticeTest = async (subjectId: number, quizIds: number[]) => {
-  const existing = await prisma.practiceTest.findFirst({
+const seedLegacyPracticeTest = async (subjectId: number, quizIds: number[]) => {
+  const existing = await prisma.legacyPracticeTest.findFirst({
     where: { title: "Fractions Fundamentals" },
   });
 
@@ -132,7 +132,7 @@ const seedPracticeTest = async (subjectId: number, quizIds: number[]) => {
     return;
   }
 
-  const test = await prisma.practiceTest.create({
+  const test = await prisma.legacyPracticeTest.create({
     data: {
       title: "Fractions Fundamentals",
       description: "Timed skill check that mixes fractions and geometry prompts.",
@@ -144,7 +144,7 @@ const seedPracticeTest = async (subjectId: number, quizIds: number[]) => {
     },
   });
 
-  await prisma.practiceTestQuiz.createMany({
+  await prisma.legacyPracticeTestQuiz.createMany({
     data: quizIds.map((quizId, index) => ({
       practice_test_id: test.id,
       quiz_id: quizId,
@@ -317,7 +317,7 @@ const main = async () => {
     d: "360",
   });
 
-  await seedPracticeTest(subject.id, [quizA.id, quizB.id, quizC.id]);
+  await seedLegacyPracticeTest(subject.id, [quizA.id, quizB.id, quizC.id]);
   await seedRewards();
   await seedNotifications(admin.id);
   await seedSupportTickets(admin.id);
