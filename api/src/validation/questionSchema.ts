@@ -1,24 +1,60 @@
 import { Difficulty, QuestionStatus, QuestionType } from "@prisma/client";
 import { z } from "zod";
 
+const collapseInlineWhitespace = (value: string) =>
+  value
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
 const stringOrArraySchema = z.union([z.array(z.string()), z.string()]);
+
+const languageSchema = z
+  .string()
+  .max(5)
+  .refine((value) => value.length === 0 || value.length >= 2, {
+    message: "Language must be between 2 and 5 characters",
+  });
 
 const normalizeList = (value?: string[] | string | null) => {
   if (Array.isArray(value)) {
-    return value.map((item) => item?.toString().trim()).filter((item) => item && item.length);
+    const normalizedList = value
+      .map((item) => {
+        if (item === undefined || item === null) {
+          return "";
+        }
+        return collapseInlineWhitespace(item.toString());
+      })
+      .filter((item) => item.length);
+    return normalizedList.length ? normalizedList : undefined;
   }
 
   if (typeof value === "string") {
-    return value
+    const normalizedList = value
       .split(/[,|;]/)
-      .map((item) => item.trim())
+      .map((item) => collapseInlineWhitespace(item))
       .filter((item) => item.length);
+    return normalizedList.length ? normalizedList : undefined;
   }
 
   return undefined;
 };
 
-const normalizeLanguage = (value?: string | null) => value?.trim().toUpperCase();
+const normalizeLanguage = (value?: string | null) => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  return trimmed.toUpperCase();
+};
+
+const normalizeScalar = (value?: string | null) => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  const normalized = collapseInlineWhitespace(value);
+  return normalized.length ? normalized : undefined;
+};
 
 export const questionIdSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -29,6 +65,7 @@ export const questionListQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(25),
   topicId: z.coerce.number().int().positive().optional(),
   subjectId: z.coerce.number().int().positive().optional(),
+  gradeId: z.coerce.number().int().positive().optional(),
   difficulty: z.nativeEnum(Difficulty).optional(),
   status: z.nativeEnum(QuestionStatus).optional(),
   isActive: z
@@ -36,7 +73,7 @@ export const questionListQuerySchema = z.object({
     .transform((val) => (typeof val === "string" ? val === "true" : val))
     .optional(),
   type: z.nativeEnum(QuestionType).optional(),
-  language: z.string().min(2).max(5).optional(),
+  language: languageSchema.optional(),
   search: z.string().optional(),
 });
 
@@ -49,11 +86,10 @@ export const baseQuestionSchema = z.object({
   options: stringOrArraySchema.optional(),
   correctOption: z
     .string()
-    .min(1, "correctOption must not be empty")
     .optional(),
   correctAnswers: stringOrArraySchema.optional(),
   difficulty: z.nativeEnum(Difficulty).default(Difficulty.EASY),
-  language: z.string().min(2).max(5).optional(),
+  language: languageSchema.optional(),
   imageUrl: z.string().url().optional(),
   explanation: z.string().optional(),
   status: z.nativeEnum(QuestionStatus).optional(),
@@ -120,7 +156,10 @@ export const normalizeQuestionPayload = <T extends QuestionCreateInput | Questio
   }
 
   if (payload.questionText !== undefined) {
-    normalized.questionText = payload.questionText.trim();
+    const questionText = normalizeScalar(payload.questionText);
+    if (questionText !== undefined) {
+      normalized.questionText = questionText;
+    }
   }
 
   if (payload.questionType !== undefined) {
@@ -133,7 +172,10 @@ export const normalizeQuestionPayload = <T extends QuestionCreateInput | Questio
   }
 
   if (payload.correctOption !== undefined) {
-    normalized.correctOption = payload.correctOption.trim();
+    const option = normalizeScalar(payload.correctOption);
+    if (option !== undefined) {
+      normalized.correctOption = option;
+    }
   }
 
   const answers = normalizeList(payload.correctAnswers);
@@ -145,9 +187,9 @@ export const normalizeQuestionPayload = <T extends QuestionCreateInput | Questio
     normalized.difficulty = payload.difficulty;
   }
 
-  const language = normalizeLanguage(payload.language);
-  if (language) {
-    normalized.language = language;
+  if (payload.language !== undefined) {
+    const language = normalizeLanguage(payload.language);
+    normalized.language = language ?? "EN";
   }
 
   if (payload.imageUrl !== undefined) {

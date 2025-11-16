@@ -22,8 +22,18 @@ const exportQuerySchema = questionListQuerySchema
     format: z.enum(["csv", "xlsx"]).default("xlsx"),
   });
 
+const booleanQueryParam = z
+  .union([z.boolean(), z.literal("true"), z.literal("false"), z.undefined()])
+  .transform((value) => {
+    if (value === undefined) {
+      return false;
+    }
+    return value === true || value === "true";
+  });
+
 const templateQuerySchema = z.object({
   format: z.enum(["csv", "xlsx"]).default("xlsx"),
+  includeSamples: booleanQueryParam,
 });
 
 const questionTemplateHeaders = [
@@ -32,13 +42,65 @@ const questionTemplateHeaders = [
   "options",
   "correctOption",
   "correctAnswers",
-  "gradeId",
-  "subjectId",
   "topicId",
   "difficulty",
   "language",
   "explanation",
 ];
+
+const topicMappingHeaders = ["gradeName", "subjectName", "topicName", "topicId"] as const;
+
+type TemplateRow = Record<(typeof questionTemplateHeaders)[number], string>;
+
+const sampleTemplateRows: TemplateRow[] = [
+  {
+    questionText: "Which planet is known as the Red Planet?",
+    questionType: QuestionType.MULTIPLE_CHOICE,
+    options: "Mercury|Venus|Earth|Mars",
+    correctOption: "Mars",
+    correctAnswers: "",
+    topicId: "1001",
+    difficulty: Difficulty.EASY,
+    language: "EN",
+    explanation: "Mars appears red because of iron oxide on its surface.",
+  },
+  {
+    questionText: "Water boils at 100°C at sea level.",
+    questionType: QuestionType.TRUE_FALSE,
+    options: "",
+    correctOption: "TRUE",
+    correctAnswers: "",
+    topicId: "1002",
+    difficulty: Difficulty.EASY,
+    language: "EN",
+    explanation: "Standard boiling point of water is 100°C.",
+  },
+  {
+    questionText: "_______ is the process where liquid water changes into vapor.",
+    questionType: QuestionType.FILL_IN_THE_BLANK,
+    options: "",
+    correctOption: "",
+    correctAnswers: "evaporation",
+    topicId: "1003",
+    difficulty: Difficulty.MEDIUM,
+    language: "EN",
+    explanation: "Evaporation turns liquid water into gas.",
+  },
+  {
+    questionText: "Name the force that keeps the planets in orbit around the sun.",
+    questionType: QuestionType.SHORT_ANSWER,
+    options: "",
+    correctOption: "",
+    correctAnswers: "gravity|gravitational force",
+    topicId: "1004",
+    difficulty: Difficulty.MEDIUM,
+    language: "EN",
+    explanation: "Gravity pulls the planets toward the sun.",
+  },
+];
+
+const templateRowToArray = (row: TemplateRow) =>
+  questionTemplateHeaders.map((header) => row[header] ?? "");
 
 const questionInclude = {
   Topic: {
@@ -49,28 +111,32 @@ const questionInclude = {
         select: {
           id: true,
           subject_name: true,
+          GradeLevel: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
+    },
+  },
+  _count: {
+    select: {
+      quizQuestions: true,
+      practiceTestQuestions: true,
     },
   },
 } satisfies Prisma.QuestionBankInclude;
 
 type QuestionWithRelations = Prisma.QuestionBankGetPayload<{
-  include: {
-    Topic: {
-      select: {
-        id: true;
-        topic_name: true;
-        Subject: {
-          select: {
-            id: true;
-            subject_name: true;
-          };
-        };
-      };
-    };
-  };
+  include: typeof questionInclude;
 }>;
+
+type QuestionUsageSummary = {
+  quizzes: number;
+  practiceTests: number;
+};
 
 type QuestionDraft = {
   topicId: number;
@@ -91,6 +157,33 @@ type QuestionDraft = {
 
 class QuestionValidationError extends Error {}
 
+export const getQuestionUsage = async (questionId: number): Promise<QuestionUsageSummary> => {
+  const [quizzes, practiceTests] = await Promise.all([
+    prisma.quizQuestion.count({ where: { questionId } }),
+    prisma.practiceTestQuestion.count({ where: { questionId } }),
+  ]);
+
+  return { quizzes, practiceTests };
+};
+
+const resolveQuestionUsage = (
+  question: QuestionWithRelations,
+  override?: QuestionUsageSummary,
+): QuestionUsageSummary => {
+  if (override) {
+    return override;
+  }
+
+  if (question._count) {
+    return {
+      quizzes: question._count.quizQuestions ?? 0,
+      practiceTests: question._count.practiceTestQuestions ?? 0,
+    };
+  }
+
+  return { quizzes: 0, practiceTests: 0 };
+};
+
 const toStringArray = (value: Prisma.JsonValue | null | undefined) => {
   if (!Array.isArray(value)) {
     return undefined;
@@ -109,7 +202,7 @@ const toStringArray = (value: Prisma.JsonValue | null | undefined) => {
     .filter((entry) => entry.length > 0);
 };
 
-const buildQuestionResponse = (question: QuestionWithRelations) => ({
+const buildQuestionResponse = (question: QuestionWithRelations, usage?: QuestionUsageSummary) => ({
   id: question.id,
   questionText: question.questionText,
   questionType: question.questionType,
@@ -117,7 +210,10 @@ const buildQuestionResponse = (question: QuestionWithRelations) => ({
   language: question.language,
   topicId: question.topicId,
   topicName: question.Topic?.topic_name ?? null,
+  subjectId: question.Topic?.Subject?.id ?? null,
   subjectName: question.Topic?.Subject?.subject_name ?? null,
+  gradeId: question.Topic?.Subject?.GradeLevel?.id ?? null,
+  gradeName: question.Topic?.Subject?.GradeLevel?.name ?? null,
   status: question.status,
   isActive: question.isActive,
   options: toStringArray(question.options) ?? [],
@@ -127,19 +223,135 @@ const buildQuestionResponse = (question: QuestionWithRelations) => ({
   imageUrl: question.imageUrl,
   createdAt: question.createdAt,
   updatedAt: question.updatedAt,
+  usage: resolveQuestionUsage(question, usage),
 });
+
+type SubjectBreakdownEntry = {
+  subjectId: number;
+  subjectName: string;
+  count: number;
+};
+
+const cloneWhereWithoutIsActive = (where: Prisma.QuestionBankWhereInput) => {
+  const cloned: Prisma.QuestionBankWhereInput = { ...where };
+  if ("isActive" in cloned) {
+    delete cloned.isActive;
+  }
+  return cloned;
+};
+
+const buildSubjectBreakdown = async (
+  where: Prisma.QuestionBankWhereInput,
+): Promise<SubjectBreakdownEntry[]> => {
+  const groupedByTopic = await prisma.questionBank.groupBy({
+    where,
+    by: ["topicId"],
+    _count: { _all: true },
+  });
+
+  if (!groupedByTopic.length) {
+    return [];
+  }
+
+  const topics = await prisma.topic.findMany({
+    where: { id: { in: groupedByTopic.map((entry) => entry.topicId) } },
+    select: {
+      id: true,
+      Subject: {
+        select: {
+          id: true,
+          subject_name: true,
+        },
+      },
+    },
+  });
+
+  const topicToSubject = new Map<number, { subjectId: number; subjectName: string }>();
+  topics.forEach((topic) => {
+    if (!topic.Subject) {
+      return;
+    }
+    topicToSubject.set(topic.id, {
+      subjectId: topic.Subject.id,
+      subjectName: topic.Subject.subject_name,
+    });
+  });
+
+  const subjectCounts = new Map<number, SubjectBreakdownEntry>();
+
+  groupedByTopic.forEach((group) => {
+    const subject = topicToSubject.get(group.topicId);
+    if (!subject) {
+      return;
+    }
+    const current = subjectCounts.get(subject.subjectId) ?? {
+      subjectId: subject.subjectId,
+      subjectName: subject.subjectName,
+      count: 0,
+    };
+    current.count += group._count._all;
+    subjectCounts.set(subject.subjectId, current);
+  });
+
+  return Array.from(subjectCounts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+};
+
+const getQuestionAnalytics = async (where: Prisma.QuestionBankWhereInput) => {
+  const [activeCount, difficultyGroups, subjects] = await Promise.all([
+    prisma.questionBank.count({
+      where: { ...cloneWhereWithoutIsActive(where), isActive: true },
+    }),
+    prisma.questionBank.groupBy({
+      where,
+      by: ["difficulty"],
+      _count: { _all: true },
+    }),
+    buildSubjectBreakdown(where),
+  ]);
+
+  const difficulty: Record<Difficulty, number> = {
+    [Difficulty.EASY]: 0,
+    [Difficulty.MEDIUM]: 0,
+    [Difficulty.HARD]: 0,
+  };
+
+  difficultyGroups.forEach((entry) => {
+    difficulty[entry.difficulty] = entry._count._all;
+  });
+
+  return {
+    active: activeCount,
+    difficulty,
+    subjects,
+  };
+};
 
 const buildQuestionWhere = (
   filters: Omit<z.infer<typeof questionListQuerySchema>, "page" | "limit">,
 ): Prisma.QuestionBankWhereInput => {
   const where: Prisma.QuestionBankWhereInput = {};
+  const topicWhere: Prisma.TopicWhereInput = {};
 
   if (filters.topicId) {
     where.topicId = filters.topicId;
   }
 
   if (filters.subjectId) {
-    where.Topic = { is: { subject_id: filters.subjectId } };
+    topicWhere.subject_id = filters.subjectId;
+  }
+
+  if (filters.gradeId) {
+    topicWhere.Subject = {
+      is: {
+        grade_level_id: filters.gradeId,
+      },
+    };
+  }
+
+  if (Object.keys(topicWhere).length) {
+    where.Topic = { is: topicWhere };
   }
 
   if (filters.difficulty) {
@@ -175,6 +387,38 @@ const buildQuestionWhere = (
 
 const serializeJsonField = (value?: string[]) =>
   value !== undefined ? (value as Prisma.InputJsonValue) : Prisma.JsonNull;
+
+const cleanImportValue = (value: string) =>
+  value
+    .replace(/\u0000/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
+const sanitizeImportCells = (row: Record<string, string>) => {
+  const sanitized: Record<string, string> = {};
+  Object.entries(row).forEach(([key, value]) => {
+    if (!key) {
+      return;
+    }
+    const normalizedKey = key.trim();
+    if (!normalizedKey.length) {
+      return;
+    }
+    const textValue = typeof value === "string" ? value : String(value ?? "");
+    sanitized[normalizedKey] = cleanImportValue(textValue);
+  });
+  return sanitized;
+};
+
+const resolveImportField = (...candidates: (string | undefined)[]) => {
+  for (const candidate of candidates) {
+    if (candidate !== undefined && candidate !== null && candidate.length > 0) {
+      return candidate;
+    }
+  }
+  return undefined;
+};
 
 const ensureQuestionStructure = (
   payload: NormalizedQuestionInput,
@@ -308,7 +552,7 @@ export const getQuestions = async (req: Request, res: Response, next: NextFuncti
     const { page, limit, ...filters } = questionListQuerySchema.parse(req.query);
     const where = buildQuestionWhere(filters);
 
-    const [total, questions] = await Promise.all([
+    const [total, questions, analytics] = await Promise.all([
       prisma.questionBank.count({ where }),
       prisma.questionBank.findMany({
         where,
@@ -317,13 +561,20 @@ export const getQuestions = async (req: Request, res: Response, next: NextFuncti
         skip: (page - 1) * limit,
         take: limit,
       }),
+      getQuestionAnalytics(where),
     ]);
 
     return res.json({
       success: true,
       data: {
-        questions: questions.map(buildQuestionResponse),
+        questions: questions.map((question) => buildQuestionResponse(question)),
         pagination: { page, limit, total },
+        analytics: {
+          total,
+          active: analytics.active,
+          difficulty: analytics.difficulty,
+          subjects: analytics.subjects,
+        },
       },
     });
   } catch (error) {
@@ -346,7 +597,11 @@ export const getQuestion = async (req: Request, res: Response, next: NextFunctio
       return res.status(404).json({ success: false, message: "Question not found" });
     }
 
-    return res.json({ success: true, data: { question: buildQuestionResponse(question) } });
+    const usage = await getQuestionUsage(id);
+    return res.json({
+      success: true,
+      data: { question: buildQuestionResponse(question, usage) },
+    });
   } catch (error) {
     if (error instanceof QuestionValidationError) {
       return res.status(400).json({ success: false, message: error.message });
@@ -376,7 +631,7 @@ export const createQuestion = async (req: Request, res: Response, next: NextFunc
     }
     await assertTopicHierarchy(hierarchyPayload);
 
-    const question = await prisma.questionBank.create({
+    const createdQuestion = await prisma.questionBank.create({
       data: {
         topicId: draft.topicId,
         questionText: draft.questionText,
@@ -392,10 +647,24 @@ export const createQuestion = async (req: Request, res: Response, next: NextFunc
         status: draft.status,
         createdById: req.user?.id ?? null,
       },
+    });
+
+    await recordAdminAction(
+      req.user?.id,
+      "QuestionBank",
+      "CREATE",
+      createdQuestion.id,
+      createdQuestion.questionText,
+    );
+
+    const question = await prisma.questionBank.findUnique({
+      where: { id: createdQuestion.id },
       include: questionInclude,
     });
 
-    await recordAdminAction(req.user?.id, "QuestionBank", "CREATE", question.id, question.questionText);
+    if (!question) {
+      throw new QuestionValidationError("Question could not be loaded after creation");
+    }
 
     return res.status(201).json({ success: true, data: { question: buildQuestionResponse(question) } });
   } catch (error) {
@@ -423,7 +692,7 @@ export const updateQuestion = async (req: Request, res: Response, next: NextFunc
 
     const draft = ensureQuestionStructure(normalized, existing);
 
-    const question = await prisma.questionBank.update({
+    const updatedQuestion = await prisma.questionBank.update({
       where: { id },
       data: {
         topicId: draft.topicId,
@@ -439,10 +708,18 @@ export const updateQuestion = async (req: Request, res: Response, next: NextFunc
         isActive: draft.isActive,
         status: draft.status,
       },
-      include: questionInclude,
     });
 
     await recordAdminAction(req.user?.id, "QuestionBank", "UPDATE", id, draft.questionText);
+
+    const question = await prisma.questionBank.findUnique({
+      where: { id },
+      include: questionInclude,
+    });
+
+    if (!question) {
+      throw new QuestionValidationError("Question could not be loaded after update");
+    }
 
     return res.json({ success: true, data: { question: buildQuestionResponse(question) } });
   } catch (error) {
@@ -536,26 +813,31 @@ const parseXlsxBuffer = async (buffer: Buffer) => {
   return rows;
 };
 
-const normalizeImportRow = (row: Record<string, string>) => {
+const normalizeImportRow = (rawRow: Record<string, string>) => {
+  const row = sanitizeImportCells(rawRow);
   const optionKeys = ["optionA", "optionB", "optionC", "optionD", "optionE", "optionF"];
   const inlineOptions = optionKeys
-    .map((key) => row[key] ?? row[key.toLowerCase()])
-    .filter((value) => value && value.length);
+    .map((key) => resolveImportField(row[key], row[key.toLowerCase()]))
+    .filter((value): value is string => Boolean(value));
+  const optionsValue =
+    resolveImportField(row.options) ??
+    (inlineOptions.length ? inlineOptions.join("|") : undefined);
+  const questionTypeValue =
+    resolveImportField(row.questionType, row.question_type) ?? QuestionType.MULTIPLE_CHOICE;
+  const difficultyValue = resolveImportField(row.difficulty) ?? Difficulty.EASY;
 
   return {
-    topicId: row.topicId ?? row.topic_id,
-    subjectId: row.subjectId ?? row.subject_id,
-    gradeId: row.gradeId ?? row.grade_id,
-    questionText: row.questionText ?? row.question ?? row.question_text,
-    questionType: (row.questionType ?? row.question_type ?? "MULTIPLE_CHOICE")
-      .toUpperCase()
-      .replace(/-/g, "_"),
-    options: row.options ?? (inlineOptions.length ? inlineOptions.join("|") : undefined),
-    correctOption: row.correctOption ?? row.correct_option,
-    correctAnswers: row.correctAnswers ?? row.correct_answers,
-    difficulty: (row.difficulty ?? "EASY").toUpperCase(),
-    language: row.language,
-    explanation: row.explanation ?? row.rationale,
+    topicId: resolveImportField(row.topicId, row.topic_id),
+    subjectId: resolveImportField(row.subjectId, row.subject_id),
+    gradeId: resolveImportField(row.gradeId, row.grade_id),
+    questionText: resolveImportField(row.questionText, row.question, row.question_text),
+    questionType: questionTypeValue.toUpperCase().replace(/-/g, "_"),
+    options: optionsValue,
+    correctOption: resolveImportField(row.correctOption, row.correct_option),
+    correctAnswers: resolveImportField(row.correctAnswers, row.correct_answers),
+    difficulty: difficultyValue.toUpperCase(),
+    language: resolveImportField(row.language),
+    explanation: resolveImportField(row.explanation, row.rationale),
   };
 };
 
@@ -830,14 +1112,18 @@ export const downloadQuestionTemplate = async (
   next: NextFunction,
 ) => {
   try {
-    const { format } = templateQuerySchema.parse(req.query);
+    const { format, includeSamples } = templateQuerySchema.parse(req.query);
+    const rows = includeSamples ? sampleTemplateRows : [];
 
     if (format === "csv") {
-      const csv = `${questionTemplateHeaders.join(",")}\n`;
+      const csv = Papa.unparse({
+        fields: questionTemplateHeaders,
+        data: rows.map((row) => templateRowToArray(row)),
+      });
       res.setHeader("Content-Type", "text/csv");
       res.setHeader(
         "Content-Disposition",
-        'attachment; filename="question-bank-template.csv"',
+        `attachment; filename="question-bank-template${includeSamples ? "-sample" : ""}.csv"`,
       );
       return res.status(200).send(csv);
     }
@@ -845,6 +1131,7 @@ export const downloadQuestionTemplate = async (
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Template");
     sheet.addRow(questionTemplateHeaders);
+    rows.forEach((row) => sheet.addRow(templateRowToArray(row)));
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.setHeader(
@@ -853,7 +1140,81 @@ export const downloadQuestionTemplate = async (
     );
     res.setHeader(
       "Content-Disposition",
-      'attachment; filename="question-bank-template.xlsx"',
+      `attachment; filename="question-bank-template${includeSamples ? "-sample" : ""}.xlsx"`,
+    );
+    return res.status(200).send(Buffer.from(buffer));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadTopicMapping = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { format } = templateQuerySchema.parse(req.query);
+    const topics = await prisma.topic.findMany({
+      select: {
+        id: true,
+        topic_name: true,
+        Subject: {
+          select: {
+            subject_name: true,
+            GradeLevel: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const rows = topics
+      .map((topic) => ({
+        gradeName: topic.Subject?.GradeLevel?.name ?? "",
+        subjectName: topic.Subject?.subject_name ?? "",
+        topicName: topic.topic_name,
+        topicId: topic.id,
+      }))
+      .sort((a, b) => {
+        if (a.gradeName !== b.gradeName) {
+          return a.gradeName.localeCompare(b.gradeName);
+        }
+        if (a.subjectName !== b.subjectName) {
+          return a.subjectName.localeCompare(b.subjectName);
+        }
+        return a.topicName.localeCompare(b.topicName);
+      });
+
+    if (format === "csv") {
+      const csv = Papa.unparse({
+        fields: [...topicMappingHeaders],
+        data: rows.map((row) =>
+          topicMappingHeaders.map((header) => String(row[header] ?? "")),
+        ),
+      });
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="question-topic-mapping.csv"',
+      );
+      return res.status(200).send(csv);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("TopicMapping");
+    sheet.addRow([...topicMappingHeaders]);
+    rows.forEach((row) => {
+      sheet.addRow(topicMappingHeaders.map((header) => row[header]));
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="question-topic-mapping.xlsx"',
     );
     return res.status(200).send(Buffer.from(buffer));
   } catch (error) {

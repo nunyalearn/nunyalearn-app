@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,10 +27,26 @@ type TopicOption = {
   name?: string;
 };
 
+export type QuestionModalPayload = {
+  id?: number;
+  questionText?: string;
+  questionType?: string;
+  difficulty?: string;
+  language?: string;
+  explanation?: string | null;
+  gradeId?: number | null;
+  subjectId?: number | null;
+  topicId?: number | null;
+  options?: string[];
+  correctOption?: string | null;
+  correctAnswers?: string[];
+};
+
 type NewQuestionModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void | Promise<void>;
+  question?: QuestionModalPayload | null;
 };
 
 const questionTypeOptions = [
@@ -78,7 +94,7 @@ const getErrorMessage = (error: unknown, fallback = "Please try again.") => {
   return typeof fallbackMessage === "string" ? fallbackMessage : fallback;
 };
 
-const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalProps) => {
+const NewQuestionModal = ({ open, onOpenChange, onCreated, question }: NewQuestionModalProps) => {
   const { toast } = useToast();
 
   const [questionText, setQuestionText] = useState("");
@@ -94,6 +110,28 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
   const [correctAnswersText, setCorrectAnswersText] = useState("");
   const [explanation, setExplanation] = useState("");
   const [saving, setSaving] = useState(false);
+  const isEditing = Boolean(question?.id);
+
+  const updateGradeSelection = useCallback(
+    (value: string, resetDependents = true) => {
+      setGradeId(value);
+      if (resetDependents) {
+        setSubjectId("");
+        setTopicId("");
+      }
+    },
+    [],
+  );
+
+  const updateSubjectSelection = useCallback(
+    (value: string, resetTopic = true) => {
+      setSubjectId(value);
+      if (resetTopic) {
+        setTopicId("");
+      }
+    },
+    [],
+  );
 
   const shouldLoadData = open;
   const { data: gradePayload } = useSWR<{ grades: GradeOption[] }>(
@@ -117,32 +155,53 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
   const { data: topicPayload } = useSWR<{ topics: TopicOption[] }>(topicKey, fetcher);
   const topicOptions = topicPayload?.topics ?? [];
 
+  const resetForm = useCallback(() => {
+    setQuestionText("");
+    setQuestionType("MULTIPLE_CHOICE");
+    setDifficulty("EASY");
+    setLanguage("EN");
+    updateGradeSelection("", true);
+    setMcqOptions(["", ""]);
+    setMcqCorrectOption("");
+    setTfCorrectOption("TRUE");
+    setCorrectAnswersText("");
+    setExplanation("");
+    setSaving(false);
+  }, [updateGradeSelection]);
+
+  const hydrateFromQuestion = useCallback(
+    (record?: QuestionModalPayload | null) => {
+      if (!record) {
+        resetForm();
+        return;
+      }
+
+      setQuestionText(record.questionText ?? "");
+      const nextType = record.questionType ?? "MULTIPLE_CHOICE";
+      setQuestionType(nextType);
+      setDifficulty(record.difficulty ?? "EASY");
+      setLanguage(record.language ?? "EN");
+      updateGradeSelection(record.gradeId ? String(record.gradeId) : "", false);
+      updateSubjectSelection(record.subjectId ? String(record.subjectId) : "", false);
+      setTopicId(record.topicId ? String(record.topicId) : "");
+      setMcqOptions(record.options?.length ? record.options : ["", ""]);
+      setMcqCorrectOption(record.correctOption ?? "");
+      setTfCorrectOption((record.correctOption ?? "TRUE").toUpperCase());
+      setCorrectAnswersText(
+        record.correctAnswers && record.correctAnswers.length ? record.correctAnswers.join("\n") : "",
+      );
+      setExplanation(record.explanation ?? "");
+    },
+    [resetForm, updateGradeSelection, updateSubjectSelection],
+  );
+
   useEffect(() => {
     if (!open) {
-      setQuestionText("");
-      setQuestionType("MULTIPLE_CHOICE");
-      setDifficulty("EASY");
-      setLanguage("EN");
-      setGradeId("");
-      setSubjectId("");
-      setTopicId("");
-      setMcqOptions(["", ""]);
-      setMcqCorrectOption("");
-      setTfCorrectOption("TRUE");
-      setCorrectAnswersText("");
-      setExplanation("");
-      setSaving(false);
+      resetForm();
+      return;
     }
-  }, [open]);
-
-  useEffect(() => {
-    setSubjectId("");
-    setTopicId("");
-  }, [gradeId]);
-
-  useEffect(() => {
-    setTopicId("");
-  }, [subjectId]);
+    hydrateFromQuestion(question);
+  }, [hydrateFromQuestion, open, question, resetForm]);
 
   useEffect(() => {
     if (questionType !== "MULTIPLE_CHOICE") {
@@ -273,8 +332,17 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
 
     try {
       setSaving(true);
-      await api.post("/admin/questionbank", payload);
-      toast({ title: "Question created", description: "The question has been added to the bank." });
+      if (isEditing && question?.id) {
+        await api.put(`/admin/questionbank/${question.id}`, payload);
+      } else {
+        await api.post("/admin/questionbank", payload);
+      }
+      toast({
+        title: isEditing ? "Question updated" : "Question created",
+        description: isEditing
+          ? "Changes have been applied to this question."
+          : "The question has been added to the bank.",
+      });
       await Promise.resolve(onCreated?.());
       onOpenChange(false);
     } catch (error: unknown) {
@@ -289,8 +357,12 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl space-y-4">
         <DialogHeader>
-          <DialogTitle>New Question</DialogTitle>
-          <DialogDescription>Manually curate Question Bank 2.0 items.</DialogDescription>
+          <DialogTitle>{isEditing ? "Edit Question" : "New Question"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update the prompt, mappings, or answer keys."
+              : "Manually curate Question Bank 2.0 items."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -355,7 +427,7 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Grade</label>
-              <Select value={gradeId} onValueChange={setGradeId}>
+              <Select value={gradeId} onValueChange={(value) => updateGradeSelection(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select grade" />
                 </SelectTrigger>
@@ -372,7 +444,7 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
               <label className="text-sm font-medium text-muted-foreground">Subject</label>
               <Select
                 value={subjectId}
-                onValueChange={setSubjectId}
+                onValueChange={(value) => updateSubjectSelection(value)}
                 disabled={!gradeId || subjectOptions.length === 0}
               >
                 <SelectTrigger>
@@ -500,7 +572,7 @@ const NewQuestionModal = ({ open, onOpenChange, onCreated }: NewQuestionModalPro
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save question"}
+            {saving ? "Saving..." : isEditing ? "Save changes" : "Save question"}
           </Button>
         </DialogFooter>
       </DialogContent>

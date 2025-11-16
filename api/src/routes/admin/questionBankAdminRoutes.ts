@@ -5,6 +5,7 @@ import {
   deactivateQuestion,
   exportQuestions,
   downloadQuestionTemplate,
+  downloadTopicMapping,
   getQuestion,
   getQuestions,
   importQuestions,
@@ -22,6 +23,7 @@ router.use(verifyToken, verifyRole(Role.ADMIN));
 router.get("/", getQuestions);
 router.get("/export", exportQuestions);
 router.get("/template", downloadQuestionTemplate);
+router.get("/topic-mapping", downloadTopicMapping);
 router.post("/", createQuestion);
 router.post("/import", uploadSingleFile, importQuestions);
 router.get("/:id", getQuestion);
