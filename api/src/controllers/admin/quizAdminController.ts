@@ -9,6 +9,7 @@ import {
   quizStatusSchema,
   updateQuizSchema,
 } from "../../validation/quizSchema";
+import { mapQuestionDto, mapQuizDto } from "../../utils/dtoMappers";
 
 const quizInclude = {
   Topic: {
@@ -67,27 +68,24 @@ const findActiveQuestionIds = async (topicId: number, questionIds: number[]) => 
   return { normalized, missing };
 };
 
-const buildQuizResponse = (quiz: QuizWithRelations) => ({
-  id: quiz.id,
-  topicId: quiz.topicId,
-  topicName: quiz.Topic?.topic_name ?? null,
-  title: quiz.title,
-  description: quiz.description,
-  difficulty: quiz.difficulty,
-  isActive: quiz.isActive,
-  createdAt: quiz.createdAt,
-  updatedAt: quiz.updatedAt,
-  questionCount: quiz.questions.length,
-  questions: quiz.questions.map((entry) => ({
-    quizQuestionId: entry.id,
-    questionId: entry.questionId,
-    orderIndex: entry.orderIndex,
-    questionText: entry.Question.questionText,
-    questionDifficulty: entry.Question.difficulty,
-    questionType: entry.Question.questionType,
-    questionStatus: entry.Question.status,
-  })),
-});
+const buildQuizResponse = (quiz: QuizWithRelations) => {
+  return mapQuizDto({
+    ...quiz,
+    questions: quiz.questions.map((entry) =>
+      mapQuestionDto({
+        quizQuestionId: entry.id,
+        questionId: entry.questionId,
+        orderIndex: entry.orderIndex,
+        questionText: entry.Question.questionText,
+        questionDifficulty: entry.Question.difficulty,
+        questionType: entry.Question.questionType,
+        questionStatus: entry.Question.status,
+        topicId: quiz.topicId,
+        topicName: quiz.Topic?.topic_name ?? null,
+      }),
+    ),
+  });
+};
 
 const getQuizWithRelations = async (id: number) => {
   return prisma.quiz.findUnique({
@@ -109,7 +107,7 @@ const respondInvalidQuestions = (res: Response, invalidIds: number[]) => {
 
 export const listQuizzesByTopic = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { topicId, includeInactive } = quizListQuerySchema.parse(req.query);
+    const { topicId, includeInactive, page, limit } = quizListQuerySchema.parse(req.query);
 
     const topic = await prisma.topic.findUnique({
       where: { id: topicId },
@@ -120,20 +118,49 @@ export const listQuizzesByTopic = async (req: Request, res: Response, next: Next
       return res.status(404).json({ success: false, message: "Topic not found" });
     }
 
-    const quizzes = await prisma.quiz.findMany({
-      where: {
-        topicId,
-        ...(includeInactive ? {} : { isActive: true }),
-      },
-      include: quizInclude,
-      orderBy: { updatedAt: "desc" },
-    });
+    const where: Prisma.QuizWhereInput = {
+      topicId,
+      ...(includeInactive ? {} : { isActive: true }),
+    };
+
+    if (!page || !limit) {
+      const quizzes = await prisma.quiz.findMany({
+        where,
+        include: quizInclude,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          topic: { id: topic.id, name: topic.topic_name },
+          quizzes: quizzes.map(buildQuizResponse),
+        },
+      });
+    }
+
+    const [total, pagedQuizzes] = await Promise.all([
+      prisma.quiz.count({ where }),
+      prisma.quiz.findMany({
+        where,
+        include: quizInclude,
+        orderBy: { updatedAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
 
     return res.json({
       success: true,
       data: {
         topic: { id: topic.id, name: topic.topic_name },
-        quizzes: quizzes.map(buildQuizResponse),
+        quizzes: pagedQuizzes.map(buildQuizResponse),
+      },
+      meta: {
+        page,
+        limit,
+        totalItems: total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
       },
     });
   } catch (error) {
@@ -311,7 +338,8 @@ export const updateQuizStatus = async (req: Request, res: Response, next: NextFu
 
     return res.json({
       success: true,
-      data: { quiz: buildQuizResponse(quiz) },
+      data: null,
+      message: isActive ? "Quiz reactivated" : "Quiz deactivated",
     });
   } catch (error) {
     if ((error as Prisma.PrismaClientKnownRequestError)?.code === "P2025") {

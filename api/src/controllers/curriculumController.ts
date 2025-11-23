@@ -3,6 +3,7 @@ import { RequestHandler, Response } from "express";
 import { z } from "zod";
 import prisma from "../config/db";
 import { GradeLevelInput, SubjectInput, TopicInput } from "../validation/curriculumSchema";
+import { mapGradeDto, mapGradeLevelDto, mapSubjectDto, mapTopicDto } from "../utils/dtoMappers";
 
 type SubjectWithTopics = Subject & { topics: Topic[] };
 type GradeWithRelations = GradeLevel & { subjects: SubjectWithTopics[] };
@@ -23,20 +24,26 @@ const gradeInclude = {
   },
 };
 
-const formatTopic = (topic: Topic) => ({
-  id: topic.id,
-  name: topic.topic_name,
-  subjectId: topic.subject_id,
-});
+const formatTopic = (topic: Topic) =>
+  mapTopicDto({
+    ...topic,
+    id: topic.id,
+    name: topic.topic_name,
+    topic_name: topic.topic_name,
+    subjectId: topic.subject_id,
+    subject_id: topic.subject_id,
+  });
 
 const formatSubject = (subject: SubjectWithTopics, includeTopics = false) => {
   const topicList = subject.topics ?? [];
-  const base = {
+  const base = mapSubjectDto({
     id: subject.id,
     name: subject.subject_name,
     gradeLevelId: subject.grade_level_id,
     topicCount: topicList.length,
-  };
+    subject_name: subject.subject_name,
+    grade_level_id: subject.grade_level_id,
+  });
 
   if (includeTopics) {
     return {
@@ -51,13 +58,13 @@ const formatSubject = (subject: SubjectWithTopics, includeTopics = false) => {
 const formatGrade = (grade: GradeWithRelations) => {
   const subjectList = grade.subjects ?? [];
   const topicCount = subjectList.reduce((total, subject) => total + (subject.topics?.length ?? 0), 0);
-  return {
+  return mapGradeLevelDto({
     id: grade.id,
     name: grade.name,
     subjectCount: subjectList.length,
     topicCount,
     subjects: subjectList.map((subject) => formatSubject(subject, true)),
-  };
+  });
 };
 
 const gradeQuerySchema = z.object({
@@ -109,7 +116,7 @@ export const createGradeLevel: RequestHandler<unknown, unknown, GradeLevelInput>
     return res.status(201).json({
       success: true,
       message: "Grade level created",
-      data: { gradeLevel },
+      data: { gradeLevel: mapGradeDto(gradeLevel) },
     });
   } catch (error) {
     next(error);
@@ -170,7 +177,7 @@ export const createSubject: RequestHandler<unknown, unknown, SubjectInput> = asy
     return res.status(201).json({
       success: true,
       message: "Subject created",
-      data: { subject },
+      data: { subject: mapSubjectDto(subject) },
     });
   } catch (error) {
     next(error);
@@ -235,7 +242,7 @@ export const createTopic: RequestHandler<unknown, unknown, TopicInput> = async (
     return res.status(201).json({
       success: true,
       message: "Topic created",
-      data: { topic },
+      data: { topic: mapTopicDto(topic) },
     });
   } catch (error) {
     next(error);
@@ -355,7 +362,7 @@ export const deleteGrade: RequestHandler = async (req, res, next) => {
 
     await prisma.$transaction(operations);
 
-    return res.json({ success: true, message: "Grade deleted" });
+    return res.json({ success: true, data: null, message: "Grade deleted" });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return respondBadRequest(res, "Invalid grade id");
@@ -387,7 +394,7 @@ export const deleteSubject: RequestHandler = async (req, res, next) => {
 
     await prisma.$transaction(operations);
 
-    return res.json({ success: true, message: "Subject deleted" });
+    return res.json({ success: true, data: null, message: "Subject deleted" });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return respondBadRequest(res, "Invalid subject id");
@@ -406,7 +413,7 @@ export const deleteTopic: RequestHandler = async (req, res, next) => {
     }
 
     await prisma.topic.delete({ where: { id } });
-    return res.json({ success: true, message: "Topic deleted" });
+    return res.json({ success: true, data: null, message: "Topic deleted" });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return respondBadRequest(res, "Invalid topic id");

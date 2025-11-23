@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapTopicDto } from "../../utils/dtoMappers";
 
 const difficultyEnum = z.enum(["easy", "med", "medium", "hard"]);
 
@@ -87,7 +88,7 @@ export const listAdminTopics = async (req: Request, res: Response, next: NextFun
 
     return res.json({
       success: true,
-      data: { topics },
+      data: topics.map((topic) => mapTopicDto(topic)),
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -109,7 +110,10 @@ export const getAdminTopic = async (req: Request, res: Response, next: NextFunct
       return res.status(404).json({ success: false, message: "Topic not found" });
     }
 
-    return res.json({ success: true, data: { topic } });
+    return res.json({
+      success: true,
+      data: { topic: mapTopicDto(topic) },
+    });
   } catch (error) {
     next(error);
   }
@@ -138,7 +142,10 @@ export const createAdminTopic = async (req: Request, res: Response, next: NextFu
 
     await recordAdminAction(req.user?.id, "Topic", "CREATE", topic.id, topic.topic_name);
 
-    return res.status(201).json({ success: true, data: { topic } });
+    return res.status(201).json({
+      success: true,
+      data: { topic: mapTopicDto(topic) },
+    });
   } catch (error) {
     next(error);
   }
@@ -171,7 +178,10 @@ export const updateAdminTopic = async (req: Request, res: Response, next: NextFu
 
     await recordAdminAction(req.user?.id, "Topic", "UPDATE", id, topic.topic_name);
 
-    return res.json({ success: true, data: { topic } });
+    return res.json({
+      success: true,
+      data: { topic: mapTopicDto(topic) },
+    });
   } catch (error) {
     next(error);
   }
@@ -187,7 +197,11 @@ export const archiveAdminTopic = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "Topic", "ARCHIVE", id, topic.topic_name);
 
-    return res.json({ success: true, message: "Topic archived" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Topic archived",
+    });
   } catch (error) {
     next(error);
   }
@@ -203,7 +217,11 @@ export const restoreAdminTopic = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "Topic", "RESTORE", id, topic.topic_name);
 
-    return res.json({ success: true, message: "Topic restored" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Topic restored",
+    });
   } catch (error) {
     next(error);
   }

@@ -24,6 +24,12 @@ import { DataTable, TableColumn } from "@/components/DataTable";
 import api, { downloadFile, fetcher } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import NewQuestionModal, { QuestionModalPayload } from "./NewQuestionModal";
+import CurriculumFilter from "@/components/CurriculumFilter";
+import DifficultyFilter from "@/components/DifficultyFilter";
+import StatusFilter from "@/components/StatusFilter";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import TableToolbar from "@/components/TableToolbar";
 
 type QuestionUsage = {
   quizzes: number;
@@ -299,7 +305,12 @@ const QuestionBankPage = () => {
     typeFilter,
   ]);
 
-  const { data: questionPayload, isLoading, mutate } = useSWR<QuestionPayload>(listKey, fetcher);
+  const {
+    data: questionPayload,
+    isLoading,
+    error: questionError,
+    mutate,
+  } = useSWR<QuestionPayload>(listKey, fetcher);
   const { data: gradePayload } = useSWR<{ grades: GradeOption[] }>("/admin/curriculum/grades", fetcher);
 
   const subjectKey =
@@ -670,155 +681,80 @@ const QuestionBankPage = () => {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Subject distribution will appear once data matches your filters.
-              </p>
+              <EmptyState
+                message="Subject distribution will appear once data matches your filters."
+                className="text-sm text-muted-foreground"
+              />
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border border-[#919D9D]/30">
-        <CardHeader>
-          <CardTitle className="text-base text-[#004976]">Filters</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-sm text-muted-foreground">Search</label>
-            <Input
-              placeholder="Search question text..."
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Grade</label>
-            <Select value={gradeFilter} onValueChange={handleGradeFilterChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="All grades" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_GRADES}>All grades</SelectItem>
-                {gradeOptions.map((grade) => (
-                  <SelectItem key={grade.id} value={String(grade.id)}>
-                    {grade.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Subject</label>
-            <Select
-              value={subjectFilter}
-              onValueChange={handleSubjectFilterChange}
-              disabled={gradeFilter === ALL_GRADES}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={gradeFilter === ALL_GRADES ? "Select a grade first" : "All subjects"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_SUBJECTS}>All subjects</SelectItem>
-                {subjectOptions.map((subject) => (
-                  <SelectItem key={subject.id} value={String(subject.id)}>
-                    {subject.subject_name ?? subject.name ?? `Subject ${subject.id}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Topic</label>
-            <Select
-              value={topicFilter}
-              onValueChange={setTopicFilter}
-              disabled={subjectFilter === ALL_SUBJECTS}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    subjectFilter === ALL_SUBJECTS
-                      ? "Select a subject first"
-                      : topicsLoading
-                        ? "Loading..."
-                        : "All topics"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_TOPICS}>All topics</SelectItem>
-                {topicOptions.map((topic) => (
-                  <SelectItem key={topic.id} value={String(topic.id)}>
-                    {topic.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Difficulty</label>
-            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All difficulties" />
-              </SelectTrigger>
-              <SelectContent>
-                {difficultyOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Type</label>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                {questionTypeFilterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Status</label>
-            <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Language</label>
-            <Select value={languageFilter} onValueChange={setLanguageFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All languages" />
-              </SelectTrigger>
-              <SelectContent>
-                {languageFilterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <TableToolbar>
+        <div className="space-y-1 sm:col-span-2">
+          <label className="text-sm text-muted-foreground">Search</label>
+          <Input
+            placeholder="Search question text..."
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+          />
+        </div>
+        <CurriculumFilter
+          gradeValue={gradeFilter}
+          subjectValue={subjectFilter}
+          topicValue={topicFilter}
+          onGradeChange={handleGradeFilterChange}
+          onSubjectChange={handleSubjectFilterChange}
+          onTopicChange={setTopicFilter}
+          gradeOptions={gradeOptions}
+          subjectOptions={subjectOptions}
+          topicOptions={topicOptions}
+          allGradeValue={ALL_GRADES}
+          allSubjectValue={ALL_SUBJECTS}
+          allTopicValue={ALL_TOPICS}
+          topicsLoading={topicsLoading}
+        />
+        <DifficultyFilter
+          value={difficultyFilter}
+          onChange={setDifficultyFilter}
+          options={difficultyOptions}
+        />
+        <div className="space-y-1">
+          <label className="text-sm text-muted-foreground">Type</label>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              {questionTypeFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <StatusFilter
+          value={statusFilter}
+          onChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}
+          options={statusOptions}
+        />
+        <div className="space-y-1">
+          <label className="text-sm text-muted-foreground">Language</label>
+          <Select value={languageFilter} onValueChange={setLanguageFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              {languageFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </TableToolbar>
 
       <input
         ref={fileInputRef}
@@ -855,13 +791,25 @@ const QuestionBankPage = () => {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={questions}
-        isLoading={isLoading}
-        searchable={false}
-        emptyLabel="No questions match your filters."
-      />
+      {questionError ? (
+        <ErrorState
+          message="Unable to load question bank."
+          onRetry={() => mutate()}
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={questions}
+          isLoading={isLoading}
+          searchable={false}
+          emptyLabel={
+            <EmptyState
+              message="No questions match your filters."
+              className="text-sm text-muted-foreground"
+            />
+          }
+        />
+      )}
 
       {pagination ? (
         <div className="flex flex-col gap-2 rounded-3xl border bg-card px-4 py-3 shadow-sm md:flex-row md:items-center md:justify-between">

@@ -16,6 +16,8 @@ export const quizIdParamSchema = z.object({
 export const quizListQuerySchema = z.object({
   topicId: z.coerce.number().int().positive(),
   includeInactive: booleanParam,
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
 export const createQuizSchema = z.object({

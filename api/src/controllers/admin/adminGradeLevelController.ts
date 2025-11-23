@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapGradeDto, mapSubjectDto } from "../../utils/dtoMappers";
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -60,21 +61,19 @@ export const listGradeLevels = async (req: Request, res: Response, next: NextFun
 
     const [total, gradeLevels] = await Promise.all([totalPromise, gradeLevelsPromise] as const);
 
-    const normalized = gradeLevels.map((level) => ({
-      id: level.id,
-      name: level.name,
-      description: level.description,
-      order_index: level.order_index,
-      is_active: level.is_active,
-      subjectCount: level._count.subjects,
-      created_at: level.created_at,
-      updated_at: level.updated_at,
-    }));
+    const normalized = gradeLevels.map((level) =>
+      mapGradeDto({
+        ...level,
+        subjectCount: level._count.subjects,
+      }),
+    );
 
     return res.json({
       success: true,
-      data: { gradeLevels: normalized },
-      pagination: { page, limit, total },
+      data: {
+        gradeLevels: normalized,
+        pagination: { page, limit, total },
+      },
     });
   } catch (error) {
     next(error);
@@ -104,7 +103,15 @@ export const getGradeLevel = async (req: Request, res: Response, next: NextFunct
       return res.status(404).json({ success: false, message: "Grade level not found" });
     }
 
-    return res.json({ success: true, data: { gradeLevel } });
+    return res.json({
+      success: true,
+      data: {
+        gradeLevel: {
+          ...mapGradeDto(gradeLevel),
+          subjects: gradeLevel.subjects?.map((subject) => mapSubjectDto(subject)),
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -125,7 +132,10 @@ export const createGradeLevel = async (req: Request, res: Response, next: NextFu
 
     await recordAdminAction(req.user?.id, "GradeLevel", "CREATE", gradeLevel.id, gradeLevel.name);
 
-    return res.status(201).json({ success: true, data: { gradeLevel } });
+    return res.status(201).json({
+      success: true,
+      data: { gradeLevel: mapGradeDto(gradeLevel) },
+    });
   } catch (error) {
     next(error);
   }
@@ -149,7 +159,10 @@ export const updateGradeLevel = async (req: Request, res: Response, next: NextFu
 
     await recordAdminAction(req.user?.id, "GradeLevel", "UPDATE", id, payload.name);
 
-    return res.json({ success: true, data: { gradeLevel } });
+    return res.json({
+      success: true,
+      data: { gradeLevel: mapGradeDto(gradeLevel) },
+    });
   } catch (error) {
     next(error);
   }
@@ -166,7 +179,11 @@ export const archiveGradeLevel = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "GradeLevel", "ARCHIVE", id, gradeLevel.name);
 
-    return res.json({ success: true, message: "Grade level archived" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Grade level archived",
+    });
   } catch (error) {
     next(error);
   }
@@ -183,7 +200,11 @@ export const restoreGradeLevel = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "GradeLevel", "RESTORE", id, gradeLevel.name);
 
-    return res.json({ success: true, message: "Grade level restored" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Grade level restored",
+    });
   } catch (error) {
     next(error);
   }

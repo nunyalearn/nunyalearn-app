@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../config/db";
+import { mapUserDto } from "../utils/dtoMappers";
 import {
   getRefreshExpiryDate,
   signAccessToken,
@@ -50,15 +51,17 @@ const sanitizeUser = (user: {
   xp_total: number;
   is_premium: boolean;
   role: Role;
-}) => ({
-  id: user.id,
-  fullName: user.full_name,
-  email: user.email,
-  level: user.level,
-  xpTotal: user.xp_total,
-  isPremium: user.is_premium,
-  role: user.role,
-});
+  join_date?: Date;
+  streak_days?: number | null;
+}) =>
+  mapUserDto({
+    ...user,
+    full_name: user.full_name,
+    xp_total: user.xp_total,
+    is_premium: user.is_premium,
+    join_date: user.join_date,
+    streak_days: user.streak_days,
+  });
 
 const createTokenPair = async (
   client: PrismaExecutor,

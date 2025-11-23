@@ -9,6 +9,7 @@ import {
   practiceTestStatusSchema,
   updatePracticeTestSchema,
 } from "../../validation/practiceTestSchema";
+import { mapPracticeTestDto, mapQuestionDto } from "../../utils/dtoMappers";
 
 type DifficultyMix = Partial<Record<Difficulty, number>>;
 
@@ -79,31 +80,25 @@ const buildPracticeTestResponse = (test: PracticeTestPayload) => {
     }
   });
 
-  return {
-    id: test.id,
-    title: test.title,
-    description: test.description,
+  return mapPracticeTestDto({
+    ...test,
     subject: test.Subject ? { id: test.Subject.id, name: test.Subject.subject_name } : null,
     gradeLevel: test.GradeLevel ? { id: test.GradeLevel.id, name: test.GradeLevel.name } : null,
-    durationMinutes: test.durationMinutes,
-    xpReward: test.xpReward,
-    questionCount: test.questionCount,
-    isActive: test.isActive,
     difficultyMix,
     topicIds: topicFilters.topicIds,
     topics: Array.from(topicMap.entries()).map(([id, name]) => ({ id, name })),
-    questions: test.questions.map((entry) => ({
-      id: entry.id,
-      questionId: entry.Question.id,
-      orderIndex: entry.orderIndex,
-      questionText: entry.Question.questionText,
-      difficulty: entry.Question.difficulty,
-      topicId: entry.Question.topicId,
-      topicName: entry.Question.Topic?.topic_name ?? null,
-    })),
-    createdAt: test.createdAt,
-    updatedAt: test.updatedAt,
-  };
+    questions: test.questions.map((entry) =>
+      mapQuestionDto({
+        id: entry.id,
+        questionId: entry.Question.id,
+        orderIndex: entry.orderIndex,
+        questionText: entry.Question.questionText,
+        difficulty: entry.Question.difficulty,
+        topicId: entry.Question.topicId,
+        topicName: entry.Question.Topic?.topic_name ?? null,
+      }),
+    ),
+  });
 };
 
 const ensureTopics = async (topicIds: number[], subjectId?: number) => {
@@ -173,7 +168,7 @@ const generateQuestionSelection = async (
 
 export const listPracticeTests = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { subjectId, gradeLevelId, includeInactive, search } =
+    const { subjectId, gradeLevelId, includeInactive, search, page, limit } =
       practiceTestListQuerySchema.parse(req.query);
 
     const where: Prisma.PracticeTestWhereInput = {};
@@ -191,15 +186,39 @@ export const listPracticeTests = async (req: Request, res: Response, next: NextF
       where.title = { contains: search.trim(), mode: "insensitive" };
     }
 
-    const tests = await prisma.practiceTest.findMany({
-      where,
-      include: practiceTestInclude,
-      orderBy: { updatedAt: "desc" },
-    });
+    if (!page || !limit) {
+      const tests = await prisma.practiceTest.findMany({
+        where,
+        include: practiceTestInclude,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      return res.json({
+        success: true,
+        data: { tests: tests.map(buildPracticeTestResponse) },
+      });
+    }
+
+    const [total, tests] = await Promise.all([
+      prisma.practiceTest.count({ where }),
+      prisma.practiceTest.findMany({
+        where,
+        include: practiceTestInclude,
+        orderBy: { updatedAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
 
     return res.json({
       success: true,
       data: { tests: tests.map(buildPracticeTestResponse) },
+      meta: {
+        page,
+        limit,
+        totalItems: total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
     });
   } catch (error) {
     next(error);
@@ -421,7 +440,11 @@ export const updatePracticeTestStatus = async (
       test.title,
     );
 
-    return res.json({ success: true, data: { test: buildPracticeTestResponse(test) } });
+    return res.json({
+      success: true,
+      data: null,
+      message: isActive ? "Practice test reactivated" : "Practice test deactivated",
+    });
   } catch (error) {
     if ((error as Prisma.PrismaClientKnownRequestError)?.code === "P2025") {
       return res.status(404).json({ success: false, message: "Practice test not found" });

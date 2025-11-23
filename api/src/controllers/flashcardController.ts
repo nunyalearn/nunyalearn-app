@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../config/db";
+import { mapFlashcardDto } from "../utils/dtoMappers";
 
 const booleanQuery = z
   .union([z.literal("true"), z.literal("false"), z.boolean()])
@@ -87,7 +88,7 @@ export const getFlashcards = async (req: Request, res: Response, next: NextFunct
 
     return res.json({
       success: true,
-      data: { flashcards: result },
+      data: result.map((flashcard) => mapFlashcardDto(flashcard)),
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -111,7 +112,10 @@ export const createFlashcard = async (req: Request, res: Response, next: NextFun
       },
     });
 
-    return res.status(201).json({ success: true, data: { flashcard } });
+    return res.status(201).json({
+      success: true,
+      data: { flashcard: mapFlashcardDto(flashcard) },
+    });
   } catch (error) {
     next(error);
   }

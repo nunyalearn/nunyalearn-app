@@ -8,49 +8,54 @@ datasource db {
 }
 
 model User {
-  id                 Int               @id @default(autoincrement())
-  full_name          String
-  email              String            @unique
-  password_hash      String
-  join_date          DateTime          @default(now())
-  is_premium         Boolean           @default(false)
-  xp_total           Int               @default(0)
-  level              Int               @default(1)
-  streak_days        Int               @default(0)
-  role               Role              @default(USER)
-  is_active          Boolean           @default(true)
-  adminAuditLogs     AdminAuditLog[]   @relation("AdminAuditTrail")
-  attempts           Attempt[]
-  notifications      Notification[]    @relation("NotificationCreator")
-  passwordResets     PasswordReset[]
-  payments           Payment[]
-  progress           Progress[]
-  issuedRewardGrants RewardGrant[]     @relation("RewardIssuer")
-  rewardGrants       RewardGrant[]     @relation("RewardRecipient")
-  subscriptions      Subscription[]
-  supportResponses   SupportResponse[] @relation("SupportResponseAuthor")
-  assignedTickets    SupportTicket[]   @relation("TicketAssignee")
-  reportedTickets    SupportTicket[]   @relation("TicketReporter")
-  userAchievements   UserAchievement[]
-  userChallenges     UserChallenge[]
-  tokens             UserToken[]
-  xpHistory          XpHistory[]
-  createdQuestions   QuestionBank[]
+  id                     Int                     @id @default(autoincrement())
+  full_name              String
+  email                  String                  @unique
+  password_hash          String
+  join_date              DateTime                @default(now())
+  is_premium             Boolean                 @default(false)
+  xp_total               Int                     @default(0)
+  level                  Int                     @default(1)
+  streak_days            Int                     @default(0)
+  role                   Role                    @default(USER)
+  is_active              Boolean                 @default(true)
+  adminAuditLogs         AdminAuditLog[]         @relation("AdminAuditTrail")
+  attempts               Attempt[]
+  notifications          Notification[]          @relation("NotificationCreator")
+  passwordResets         PasswordReset[]
+  payments               Payment[]
+  progress               Progress[]
+  issuedRewardGrants     RewardGrant[]           @relation("RewardIssuer")
+  rewardGrants           RewardGrant[]           @relation("RewardRecipient")
+  subscriptions          Subscription[]
+  supportResponses       SupportResponse[]       @relation("SupportResponseAuthor")
+  assignedTickets        SupportTicket[]         @relation("TicketAssignee")
+  reportedTickets        SupportTicket[]         @relation("TicketReporter")
+  userAchievements       UserAchievement[]
+  userChallenges         UserChallenge[]
+  tokens                 UserToken[]
+  xpHistory              XpHistory[]
+  createdQuestions       QuestionBank[]
+  quizAttemptsV2         QuizAttemptV2[]
+  practiceTestAttemptsV2 PracticeTestAttemptV2[]
+  questionAttemptsV2     QuestionAttemptV2[]
+  topicMastery           TopicMastery[]
+  xpTransactions         XpTransaction[]
 }
 
 model Subject {
-  id             Int            @id @default(autoincrement())
-  subject_name   String
-  grade_level    String
-  description    String?
-  created_at     DateTime       @default(now())
-  grade_level_id Int?
-  is_active      Boolean        @default(true)
-  updated_at     DateTime       @default(now()) @updatedAt
+  id                  Int                  @id @default(autoincrement())
+  subject_name        String
+  grade_level         String
+  description         String?
+  created_at          DateTime             @default(now())
+  grade_level_id      Int?
+  is_active           Boolean              @default(true)
+  updated_at          DateTime             @default(now()) @updatedAt
   legacyPracticeTests LegacyPracticeTest[]
-  practiceTests  PracticeTest[]
-  GradeLevel     GradeLevel?    @relation(fields: [grade_level_id], references: [id])
-  topics         Topic[]
+  practiceTests       PracticeTest[]
+  GradeLevel          GradeLevel?          @relation(fields: [grade_level_id], references: [id])
+  topics              Topic[]
 
   @@unique([grade_level_id, subject_name])
 }
@@ -68,6 +73,7 @@ model Topic {
   legacyQuizzes LegacyQuiz[]
   quizzes       Quiz[]
   questions     QuestionBank[]
+  mastery       TopicMastery[]
   Subject       Subject        @relation(fields: [subject_id], references: [id])
 
   @@unique([subject_id, topic_name])
@@ -86,76 +92,78 @@ model Flashcard {
 }
 
 model LegacyQuiz {
-  id             Int                @id @default(autoincrement())
-  topic_id       Int
-  question_text  String
-  option_a       String
-  option_b       String
-  option_c       String
-  option_d       String
-  correct_option String
-  difficulty     String             @default("med")
-  is_premium     Boolean            @default(false)
-  created_at     DateTime           @default(now())
-  competency     String?
-  question_type  String?
-  xp_reward      Int                @default(0)
-  attempts       Attempt[]
-  legacyPracticeTests  LegacyPracticeTestQuiz[]
-  Topic          Topic              @relation(fields: [topic_id], references: [id])
+  id                  Int                      @id @default(autoincrement())
+  topic_id            Int
+  question_text       String
+  option_a            String
+  option_b            String
+  option_c            String
+  option_d            String
+  correct_option      String
+  difficulty          String                   @default("med")
+  is_premium          Boolean                  @default(false)
+  created_at          DateTime                 @default(now())
+  competency          String?
+  question_type       String?
+  xp_reward           Int                      @default(0)
+  attempts            Attempt[]
+  legacyPracticeTests LegacyPracticeTestQuiz[]
+  Topic               Topic                    @relation(fields: [topic_id], references: [id])
 
   @@map("Quiz")
 }
 
 model Quiz {
-  id          Int           @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   topicId     Int
   title       String
   description String?
-  difficulty  Difficulty    @default(MEDIUM)
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Topic       Topic         @relation(fields: [topicId], references: [id])
+  difficulty  Difficulty      @default(MEDIUM)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  Topic       Topic           @relation(fields: [topicId], references: [id])
   questions   QuizQuestion[]
+  attemptsV2  QuizAttemptV2[]
 
   @@map("TopicQuiz")
 }
 
 model QuizQuestion {
-  id          Int          @id @default(autoincrement())
-  quizId      Int
-  questionId  Int
-  orderIndex  Int          @default(0)
-  createdAt   DateTime     @default(now())
-  Quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  Question    QuestionBank @relation(fields: [questionId], references: [id])
+  id         Int          @id @default(autoincrement())
+  quizId     Int
+  questionId Int
+  orderIndex Int          @default(0)
+  createdAt  DateTime     @default(now())
+  Quiz       Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  Question   QuestionBank @relation(fields: [questionId], references: [id])
 
   @@unique([quizId, questionId])
   @@index([questionId])
 }
 
 model QuestionBank {
-  id             Int             @id @default(autoincrement())
-  questionText   String
-  questionType   QuestionType    @default(MULTIPLE_CHOICE)
-  options        Json?
-  correctOption  String?
-  correctAnswers Json?
-  topicId        Int
-  difficulty     Difficulty      @default(EASY)
-  language       String          @default("EN")
-  imageUrl       String?
-  explanation    String?
-  isActive       Boolean         @default(true)
-  status         QuestionStatus  @default(ACTIVE)
-  createdById    Int?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  Topic          Topic           @relation(fields: [topicId], references: [id])
-  CreatedBy      User?           @relation(fields: [createdById], references: [id])
-  quizQuestions  QuizQuestion[]
+  id                    Int                    @id @default(autoincrement())
+  questionText          String
+  questionType          QuestionType           @default(MULTIPLE_CHOICE)
+  options               Json?
+  correctOption         String?
+  correctAnswers        Json?
+  topicId               Int
+  difficulty            Difficulty             @default(EASY)
+  language              String                 @default("EN")
+  imageUrl              String?
+  explanation           String?
+  isActive              Boolean                @default(true)
+  status                QuestionStatus         @default(ACTIVE)
+  createdById           Int?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  Topic                 Topic                  @relation(fields: [topicId], references: [id])
+  CreatedBy             User?                  @relation(fields: [createdById], references: [id])
+  quizQuestions         QuizQuestion[]
   practiceTestQuestions PracticeTestQuestion[]
+  questionAttemptsV2    QuestionAttemptV2[]
 }
 
 model Attempt {
@@ -247,17 +255,17 @@ model XpHistory {
 }
 
 model LegacyPracticeTest {
-  id               Int                @id @default(autoincrement())
+  id               Int                      @id @default(autoincrement())
   title            String
   description      String?
   subject_id       Int?
-  difficulty       String             @default("med")
-  xp_reward        Int                @default(0)
+  difficulty       String                   @default("med")
+  xp_reward        Int                      @default(0)
   duration_minutes Int?
-  is_active        Boolean            @default(true)
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @updatedAt
-  Subject          Subject?           @relation(fields: [subject_id], references: [id])
+  is_active        Boolean                  @default(true)
+  created_at       DateTime                 @default(now())
+  updated_at       DateTime                 @updatedAt
+  Subject          Subject?                 @relation(fields: [subject_id], references: [id])
   quizzes          LegacyPracticeTestQuiz[]
 
   @@map("LegacyPracticeTest")
@@ -268,39 +276,40 @@ model LegacyPracticeTestQuiz {
   quiz_id          Int
   order_index      Int?
   PracticeTest     LegacyPracticeTest @relation(fields: [practice_test_id], references: [id], onDelete: Cascade)
-  LegacyQuiz       LegacyQuiz   @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  LegacyQuiz       LegacyQuiz         @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
 
   @@id([practice_test_id, quiz_id])
   @@map("LegacyPracticeTestQuiz")
 }
 
 model PracticeTest {
-  id              Int                  @id @default(autoincrement())
+  id              Int                     @id @default(autoincrement())
   title           String
   description     String?
   subjectId       Int?
   gradeLevelId    Int?
-  xpReward        Int                  @default(0)
+  xpReward        Int                     @default(0)
   questionCount   Int
   durationMinutes Int?
   difficultyMix   Json?
   topicFilters    Json?
-  isActive        Boolean              @default(true)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  Subject         Subject?             @relation(fields: [subjectId], references: [id])
-  GradeLevel      GradeLevel?          @relation(fields: [gradeLevelId], references: [id])
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  Subject         Subject?                @relation(fields: [subjectId], references: [id])
+  GradeLevel      GradeLevel?             @relation(fields: [gradeLevelId], references: [id])
   questions       PracticeTestQuestion[]
+  attemptsV2      PracticeTestAttemptV2[]
 }
 
 model PracticeTestQuestion {
-  id              Int          @id @default(autoincrement())
-  practiceTestId  Int
-  questionId      Int
-  orderIndex      Int          @default(0)
-  createdAt       DateTime     @default(now())
-  PracticeTest    PracticeTest @relation(fields: [practiceTestId], references: [id], onDelete: Cascade)
-  Question        QuestionBank @relation(fields: [questionId], references: [id])
+  id             Int          @id @default(autoincrement())
+  practiceTestId Int
+  questionId     Int
+  orderIndex     Int          @default(0)
+  createdAt      DateTime     @default(now())
+  PracticeTest   PracticeTest @relation(fields: [practiceTestId], references: [id], onDelete: Cascade)
+  Question       QuestionBank @relation(fields: [questionId], references: [id])
 
   @@unique([practiceTestId, questionId])
   @@index([questionId])
@@ -409,14 +418,14 @@ model PlatformSetting {
 }
 
 model GradeLevel {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  description String?
-  order_index Int?
-  is_active   Boolean   @default(true)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  subjects    Subject[]
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String?
+  order_index   Int?
+  is_active     Boolean        @default(true)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  subjects      Subject[]
   practiceTests PracticeTest[]
 }
 
@@ -448,6 +457,104 @@ model AdminAuditLog {
   details    String?
   created_at DateTime @default(now())
   Admin      User?    @relation("AdminAuditTrail", fields: [admin_id], references: [id])
+}
+
+model QuizAttemptV2 {
+  id               Int                 @id @default(autoincrement())
+  quizId           Int
+  userId           Int
+  status           String              @default("in_progress")
+  score            Int?
+  totalQuestions   Int?
+  correctCount     Int?
+  incorrectCount   Int?
+  xpAwarded        Int                 @default(0)
+  durationSeconds  Int?
+  metadata         Json?
+  startedAt        DateTime            @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  Quiz             Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  User             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  QuestionAttempts QuestionAttemptV2[]
+
+  @@index([userId])
+  @@index([quizId])
+}
+
+model PracticeTestAttemptV2 {
+  id               Int                 @id @default(autoincrement())
+  practiceTestId   Int
+  userId           Int
+  status           String              @default("in_progress")
+  score            Int?
+  totalQuestions   Int?
+  correctCount     Int?
+  incorrectCount   Int?
+  xpAwarded        Int                 @default(0)
+  durationSeconds  Int?
+  metadata         Json?
+  startedAt        DateTime            @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  PracticeTest     PracticeTest        @relation(fields: [practiceTestId], references: [id], onDelete: Cascade)
+  User             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  QuestionAttempts QuestionAttemptV2[]
+
+  @@index([userId])
+  @@index([practiceTestId])
+}
+
+model QuestionAttemptV2 {
+  id                    Int                    @id @default(autoincrement())
+  quizAttemptId         Int?
+  practiceTestAttemptId Int?
+  questionId            Int
+  userId                Int
+  selectedOption        String?
+  selectedOptions       Json?
+  isCorrect             Boolean
+  score                 Int                    @default(0)
+  responseMetadata      Json?
+  createdAt             DateTime               @default(now())
+  QuizAttempt           QuizAttemptV2?         @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
+  PracticeTestAttempt   PracticeTestAttemptV2? @relation(fields: [practiceTestAttemptId], references: [id], onDelete: Cascade)
+  Question              QuestionBank           @relation(fields: [questionId], references: [id])
+  User                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([quizAttemptId])
+  @@index([practiceTestAttemptId])
+  @@index([userId])
+}
+
+model TopicMastery {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  topicId         Int
+  correctAttempts Int      @default(0)
+  totalAttempts   Int      @default(0)
+  accuracy        Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  User            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Topic           Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+}
+
+model XpTransaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  amount    Int
+  reason    String?
+  source    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum ChallengeType {

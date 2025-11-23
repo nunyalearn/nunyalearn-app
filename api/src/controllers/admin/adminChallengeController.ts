@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapChallengeDto, mapChallengeParticipantDto } from "../../utils/dtoMappers";
 
 const challengeBodySchema = z.object({
   title: z.string().min(1),
@@ -49,7 +50,10 @@ export const createChallenge = async (req: Request, res: Response, next: NextFun
 
     await recordAdminAction(req.user?.id, "Challenge", "CREATE", challenge.id, challenge.title);
 
-    return res.status(201).json({ success: true, data: { challenge } });
+    return res.status(201).json({
+      success: true,
+      data: { challenge: mapChallengeDto(challenge) },
+    });
   } catch (error) {
     next(error);
   }
@@ -66,7 +70,10 @@ export const getChallenge = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ success: false, message: "Challenge not found" });
     }
 
-    return res.json({ success: true, data: { challenge } });
+    return res.json({
+      success: true,
+      data: { challenge: mapChallengeDto(challenge) },
+    });
   } catch (error) {
     next(error);
   }
@@ -99,7 +106,10 @@ export const updateChallenge = async (req: Request, res: Response, next: NextFun
 
     await recordAdminAction(req.user?.id, "Challenge", "UPDATE", params.id, challenge.title);
 
-    return res.json({ success: true, data: { challenge } });
+    return res.json({
+      success: true,
+      data: { challenge: mapChallengeDto(challenge) },
+    });
   } catch (error) {
     next(error);
   }
@@ -114,7 +124,11 @@ export const deleteChallenge = async (req: Request, res: Response, next: NextFun
 
     await recordAdminAction(req.user?.id, "Challenge", "DELETE", params.id, deleted.title);
 
-    return res.json({ success: true, message: "Challenge deleted" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Challenge deleted",
+    });
   } catch (error) {
     next(error);
   }
@@ -146,8 +160,10 @@ export const listChallenges = async (req: Request, res: Response, next: NextFunc
 
     return res.json({
       success: true,
-      data: { challenges },
-      pagination: { page: query.page, limit: query.limit, total },
+      data: {
+        challenges: challenges.map((challenge) => mapChallengeDto(challenge)),
+        pagination: { page: query.page, limit: query.limit, total },
+      },
     });
   } catch (error) {
     next(error);
@@ -210,13 +226,15 @@ export const getChallengeParticipants = async (
         completedCount,
         topParticipants: topParticipants
           .filter((participant) => participant.User)
-          .map((participant) => ({
-            userId: participant.User!.id,
-            fullName: participant.User!.full_name,
-            xp_total: participant.User!.xp_total,
-            streak_days: participant.User!.streak_days,
-            status: participant.status,
-          })),
+          .map((participant) =>
+            mapChallengeParticipantDto({
+              userId: participant.User!.id,
+              fullName: participant.User!.full_name,
+              xp_total: participant.User!.xp_total,
+              streak_days: participant.User!.streak_days,
+              status: participant.status,
+            }),
+          ),
       },
     });
   } catch (error) {

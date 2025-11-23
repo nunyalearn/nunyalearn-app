@@ -15,6 +15,7 @@ import {
   updateQuestionSchema,
   validateNormalizedQuestion,
 } from "../../validation/questionSchema";
+import { mapQuestionDto } from "../../utils/dtoMappers";
 
 const exportQuerySchema = questionListQuerySchema
   .omit({ page: true, limit: true })
@@ -121,17 +122,16 @@ const questionInclude = {
       },
     },
   },
-  _count: {
-    select: {
-      quizQuestions: true,
-      practiceTestQuestions: true,
-    },
-  },
 } satisfies Prisma.QuestionBankInclude;
 
 type QuestionWithRelations = Prisma.QuestionBankGetPayload<{
   include: typeof questionInclude;
-}>;
+}> & {
+  _count?: {
+    quizQuestions?: number | null;
+    practiceTestQuestions?: number | null;
+  } | null;
+};
 
 type QuestionUsageSummary = {
   quizzes: number;
@@ -157,13 +157,23 @@ type QuestionDraft = {
 
 class QuestionValidationError extends Error {}
 
-export const getQuestionUsage = async (questionId: number): Promise<QuestionUsageSummary> => {
-  const [quizzes, practiceTests] = await Promise.all([
-    prisma.quizQuestion.count({ where: { questionId } }),
-    prisma.practiceTestQuestion.count({ where: { questionId } }),
-  ]);
+const isRelationTableMissingError = (error: unknown) =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
 
-  return { quizzes, practiceTests };
+export const getQuestionUsage = async (questionId: number): Promise<QuestionUsageSummary> => {
+  try {
+    const [quizzes, practiceTests] = await Promise.all([
+      prisma.quizQuestion.count({ where: { questionId } }),
+      prisma.practiceTestQuestion.count({ where: { questionId } }),
+    ]);
+
+    return { quizzes, practiceTests };
+  } catch (error) {
+    if (isRelationTableMissingError(error)) {
+      return { quizzes: 0, practiceTests: 0 };
+    }
+    throw error;
+  }
 };
 
 const resolveQuestionUsage = (
@@ -202,29 +212,30 @@ const toStringArray = (value: Prisma.JsonValue | null | undefined) => {
     .filter((entry) => entry.length > 0);
 };
 
-const buildQuestionResponse = (question: QuestionWithRelations, usage?: QuestionUsageSummary) => ({
-  id: question.id,
-  questionText: question.questionText,
-  questionType: question.questionType,
-  difficulty: question.difficulty,
-  language: question.language,
-  topicId: question.topicId,
-  topicName: question.Topic?.topic_name ?? null,
-  subjectId: question.Topic?.Subject?.id ?? null,
-  subjectName: question.Topic?.Subject?.subject_name ?? null,
-  gradeId: question.Topic?.Subject?.GradeLevel?.id ?? null,
-  gradeName: question.Topic?.Subject?.GradeLevel?.name ?? null,
-  status: question.status,
-  isActive: question.isActive,
-  options: toStringArray(question.options) ?? [],
-  correctOption: question.correctOption,
-  correctAnswers: toStringArray(question.correctAnswers) ?? [],
-  explanation: question.explanation,
-  imageUrl: question.imageUrl,
-  createdAt: question.createdAt,
-  updatedAt: question.updatedAt,
-  usage: resolveQuestionUsage(question, usage),
-});
+const buildQuestionResponse = (question: QuestionWithRelations, usage?: QuestionUsageSummary) =>
+  mapQuestionDto({
+    id: question.id,
+    questionText: question.questionText,
+    questionType: question.questionType,
+    difficulty: question.difficulty,
+    language: question.language,
+    topicId: question.topicId,
+    topicName: question.Topic?.topic_name ?? null,
+    subjectId: question.Topic?.Subject?.id ?? null,
+    subjectName: question.Topic?.Subject?.subject_name ?? null,
+    gradeId: question.Topic?.Subject?.GradeLevel?.id ?? null,
+    gradeName: question.Topic?.Subject?.GradeLevel?.name ?? null,
+    status: question.status,
+    isActive: question.isActive,
+    options: toStringArray(question.options) ?? [],
+    correctOption: question.correctOption,
+    correctAnswers: toStringArray(question.correctAnswers) ?? [],
+    explanation: question.explanation,
+    imageUrl: question.imageUrl,
+    createdAt: question.createdAt,
+    updatedAt: question.updatedAt,
+    usage: resolveQuestionUsage(question, usage),
+  });
 
 type SubjectBreakdownEntry = {
   subjectId: number;
@@ -568,7 +579,6 @@ export const getQuestions = async (req: Request, res: Response, next: NextFuncti
       success: true,
       data: {
         questions: questions.map((question) => buildQuestionResponse(question)),
-        pagination: { page, limit, total },
         analytics: {
           total,
           active: analytics.active,
@@ -576,6 +586,7 @@ export const getQuestions = async (req: Request, res: Response, next: NextFuncti
           subjects: analytics.subjects,
         },
       },
+      pagination: { page, limit, total },
     });
   } catch (error) {
     if (error instanceof QuestionValidationError) {
@@ -740,7 +751,11 @@ export const deactivateQuestion = async (req: Request, res: Response, next: Next
 
     await recordAdminAction(req.user?.id, "QuestionBank", "DEACTIVATE", id, question.questionText);
 
-    return res.json({ success: true, data: { message: "Question deactivated" } });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Question deactivated",
+    });
   } catch (error) {
     if (error instanceof QuestionValidationError) {
       return res.status(400).json({ success: false, message: error.message });
@@ -759,7 +774,11 @@ export const reactivateQuestion = async (req: Request, res: Response, next: Next
 
     await recordAdminAction(req.user?.id, "QuestionBank", "REACTIVATE", id, question.questionText);
 
-    return res.json({ success: true, data: { message: "Question reactivated" } });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Question reactivated",
+    });
   } catch (error) {
     next(error);
   }

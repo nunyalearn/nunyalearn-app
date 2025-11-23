@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapAchievementDto } from "../../utils/dtoMappers";
 
 const achievementBodySchema = z.object({
   name: z.string().min(1),
@@ -40,7 +41,10 @@ export const createAchievement = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "Achievement", "CREATE", achievement.id, achievement.name);
 
-    return res.status(201).json({ success: true, data: { achievement } });
+    return res.status(201).json({
+      success: true,
+      data: { achievement: mapAchievementDto(achievement) },
+    });
   } catch (error) {
     next(error);
   }
@@ -66,7 +70,10 @@ export const updateAchievement = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "Achievement", "UPDATE", params.id, achievement.name);
 
-    return res.json({ success: true, data: { achievement } });
+    return res.json({
+      success: true,
+      data: { achievement: mapAchievementDto(achievement) },
+    });
   } catch (error) {
     next(error);
   }
@@ -82,7 +89,11 @@ export const deleteAchievement = async (req: Request, res: Response, next: NextF
 
     await recordAdminAction(req.user?.id, "Achievement", "DELETE", params.id, deleted.name);
 
-    return res.json({ success: true, message: "Achievement deleted" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Achievement deleted",
+    });
   } catch (error) {
     next(error);
   }
@@ -103,8 +114,10 @@ export const listAchievements = async (req: Request, res: Response, next: NextFu
 
     return res.json({
       success: true,
-      data: { achievements },
-      pagination: { page, limit, total },
+      data: {
+        achievements: achievements.map((achievement) => mapAchievementDto(achievement)),
+        pagination: { page, limit, total },
+      },
     });
   } catch (error) {
     next(error);
@@ -122,7 +135,10 @@ export const getAchievement = async (req: Request, res: Response, next: NextFunc
       return res.status(404).json({ success: false, message: "Achievement not found" });
     }
 
-    return res.json({ success: true, data: { achievement } });
+    return res.json({
+      success: true,
+      data: { achievement: mapAchievementDto(achievement) },
+    });
   } catch (error) {
     next(error);
   }

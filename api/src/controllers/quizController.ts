@@ -1,3 +1,26 @@
+/**
+ * 🚫 LEGACY MODULE — FROZEN 🚫
+ * -------------------------------------------------------------------
+ * This file is part of the OLD quiz/practice-test system.
+ *
+ * DO NOT MODIFY THIS FILE unless you are fixing a critical bug.
+ * DO NOT add new logic, new fields, or new features here.
+ * DO NOT refactor this file.
+ *
+ * This module will be safely deprecated once the new Quiz v2 and
+ * Practice Test v2 APIs are fully implemented and the mobile app
+ * migrates off the legacy flows.
+ *
+ * Safe actions allowed:
+ *   - Documentation updates
+ *   - Bug fixes that preserve existing behavior
+ *   - No new features or structural changes
+ *
+ * Purpose:
+ *   Preserve historical logic during migration to new models.
+ * -------------------------------------------------------------------
+ */
+// ⚠️ LEGACY QUIZ SYSTEM — DO NOT MODIFY EXCEPT FOR BUG FIXES
 import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
@@ -40,6 +63,7 @@ const shuffleInPlace = <T>(items: T[]): T[] => {
   return items;
 };
 
+// Used only by learner-facing legacy quiz endpoints until Quiz v2 is adopted.
 export const getQuizzes = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const query = quizQuerySchema.parse(req.query);
@@ -88,6 +112,7 @@ export const getQuizzes = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+// Do not extend this logic; new learner quiz features must target the new Quiz model.
 export const submitAttempt = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {

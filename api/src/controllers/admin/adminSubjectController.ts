@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapSubjectDto } from "../../utils/dtoMappers";
 import { ensureGradeLevelContext } from "../../utils/gradeLevelHelper";
 
 const listQuerySchema = z.object({
@@ -80,17 +81,16 @@ export const listAdminSubjects = async (req: Request, res: Response, next: NextF
       }),
     ]);
 
-    const normalized = subjects.map(({ _count, ...subject }) => ({
-      ...subject,
-      gradeLevel: subject.GradeLevel
-        ? { id: subject.GradeLevel.id, name: subject.GradeLevel.name }
-        : null,
-      topicCount: _count.topics,
-    }));
+    const normalized = subjects.map(({ _count, ...subject }) =>
+      mapSubjectDto({
+        ...subject,
+        topicCount: _count.topics,
+      }),
+    );
 
     return res.json({
       success: true,
-      data: { subjects: normalized },
+      data: normalized,
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -116,7 +116,10 @@ export const getAdminSubject = async (req: Request, res: Response, next: NextFun
       return res.status(404).json({ success: false, message: "Subject not found" });
     }
 
-    return res.json({ success: true, data: { subject } });
+    return res.json({
+      success: true,
+      data: { subject: mapSubjectDto(subject) },
+    });
   } catch (error) {
     next(error);
   }
@@ -140,7 +143,10 @@ export const createAdminSubject = async (req: Request, res: Response, next: Next
 
     await recordAdminAction(req.user?.id, "Subject", "CREATE", subject.id, subject.subject_name);
 
-    return res.status(201).json({ success: true, data: { subject } });
+    return res.status(201).json({
+      success: true,
+      data: { subject: mapSubjectDto(subject) },
+    });
   } catch (error) {
     if (error instanceof Error && error.message === "Grade level not found") {
       return res.status(400).json({ success: false, message: error.message });
@@ -174,7 +180,10 @@ export const updateAdminSubject = async (req: Request, res: Response, next: Next
 
     await recordAdminAction(req.user?.id, "Subject", "UPDATE", id, subject.subject_name);
 
-    return res.json({ success: true, data: { subject } });
+    return res.json({
+      success: true,
+      data: { subject: mapSubjectDto(subject) },
+    });
   } catch (error) {
     if (error instanceof Error && error.message === "Grade level not found") {
       return res.status(400).json({ success: false, message: error.message });
@@ -194,7 +203,11 @@ export const archiveAdminSubject = async (req: Request, res: Response, next: Nex
 
     await recordAdminAction(req.user?.id, "Subject", "ARCHIVE", id, subject.subject_name);
 
-    return res.json({ success: true, message: "Subject archived" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Subject archived",
+    });
   } catch (error) {
     next(error);
   }
@@ -211,7 +224,11 @@ export const restoreAdminSubject = async (req: Request, res: Response, next: Nex
 
     await recordAdminAction(req.user?.id, "Subject", "RESTORE", id, subject.subject_name);
 
-    return res.json({ success: true, message: "Subject restored" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Subject restored",
+    });
   } catch (error) {
     next(error);
   }

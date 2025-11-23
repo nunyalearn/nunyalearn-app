@@ -25,6 +25,8 @@ export const practiceTestListQuerySchema = z.object({
   gradeLevelId: z.coerce.number().int().positive().optional(),
   includeInactive: booleanParam,
   search: z.string().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
 export const createPracticeTestSchema = z.object({

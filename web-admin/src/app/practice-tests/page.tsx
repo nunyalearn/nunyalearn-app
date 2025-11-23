@@ -57,6 +57,14 @@ type PracticeTestQuestion = {
   topicName: string | null;
 };
 
+type QuestionBankPreview = {
+  id: number;
+  questionText: string;
+  difficulty: string;
+  topicId: number;
+  topicName?: string | null;
+};
+
 type PracticeTestRecord = {
   id: number;
   title: string;
@@ -82,6 +90,7 @@ type SubjectPayload = { subjects: SubjectRecord[] };
 type GradePayload = { grades: GradeRecord[] };
 type TopicPayload = { topics: TopicRecord[] };
 type PracticeTestDetailResponse = { test: PracticeTestRecord };
+type QuestionBankPayload = { questions: QuestionBankPreview[] };
 
 type DifficultyField = "EASY" | "MEDIUM" | "HARD";
 
@@ -102,6 +111,8 @@ const difficultyLabels: Record<DifficultyField, string> = {
   MEDIUM: "Medium",
   HARD: "Hard",
 };
+
+const QUESTION_BANK_PAGE_SIZE = 100; // /admin/questionbank enforces limit <= 100
 
 const getErrorMessage = (error: unknown, fallback = "Please try again.") => {
   if (!error) {
@@ -127,7 +138,6 @@ const getErrorMessage = (error: unknown, fallback = "Please try again.") => {
   return typeof fallbackMessage === "string" ? fallbackMessage : fallback;
 };
 
-const ALL_GRADES_FILTER = "ALL_GRADES";
 const UNASSIGNED_GRADE = "UNASSIGNED_GRADE";
 
 const defaultFormState: FormState = {
@@ -149,7 +159,7 @@ const defaultFormState: FormState = {
 const PracticeTestsPage = () => {
   const { toast } = useToast();
   const [subjectFilter, setSubjectFilter] = useState("");
-  const [gradeFilter, setGradeFilter] = useState(ALL_GRADES_FILTER);
+  const [gradeFilter, setGradeFilter] = useState("");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formState, setFormState] = useState<FormState>(defaultFormState);
@@ -157,22 +167,12 @@ const PracticeTestsPage = () => {
   const [saving, setSaving] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [previewQuestions, setPreviewQuestions] = useState<QuestionBankPreview[]>([]);
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
-  const { data: subjectPayload, isLoading: subjectsLoading } = useSWR<SubjectPayload>(
-    "/admin/subjects?limit=200&includeInactive=false",
-    fetcher,
-  );
+  const subjectKey = gradeFilter ? `/admin/curriculum/subjects?gradeLevelId=${gradeFilter}` : null;
+  const { data: subjectPayload, isLoading: subjectsLoading } = useSWR<SubjectPayload>(subjectKey, fetcher);
   const { data: gradePayload } = useSWR<GradePayload>("/admin/curriculum/grades", fetcher);
-  const { data: topicPayload } = useSWR<TopicPayload>(
-    "/admin/topics?limit=500&includeInactive=false",
-    fetcher,
-  );
-
-  useEffect(() => {
-    if (!subjectFilter && subjectPayload?.subjects?.length) {
-      setSubjectFilter(String(subjectPayload.subjects[0]?.id));
-    }
-  }, [subjectFilter, subjectPayload]);
 
   const subjectOptions = useMemo(
     () =>
@@ -181,6 +181,33 @@ const PracticeTestsPage = () => {
         label: subject.subject_name,
       })),
     [subjectPayload],
+  );
+
+  const builderSubjectKey =
+    formState.gradeLevelId && formState.gradeLevelId !== UNASSIGNED_GRADE
+      ? `/admin/curriculum/subjects?gradeLevelId=${formState.gradeLevelId}`
+      : null;
+  const { data: builderSubjectPayload } = useSWR<SubjectPayload>(builderSubjectKey, fetcher);
+
+  const builderTopicKey = formState.subjectId ? `/admin/curriculum/topics?subjectId=${formState.subjectId}` : null;
+  const { data: builderTopicPayload, isLoading: builderTopicsLoading } = useSWR<TopicPayload>(
+    builderTopicKey,
+    fetcher,
+  );
+
+  const formSubjectOptions =
+    builderSubjectPayload?.subjects?.map((subject) => ({
+      id: subject.id,
+      label: subject.subject_name ?? subject.name ?? `Subject ${subject.id}`,
+    })) ?? subjectOptions;
+
+  const formTopicOptions = useMemo(
+    () =>
+      builderTopicPayload?.topics?.map((topic) => ({
+        value: String(topic.id),
+        label: topic.topic_name ?? topic.name ?? `Topic ${topic.id}`,
+      })) ?? [],
+    [builderTopicPayload],
   );
 
   const gradeOptions = useMemo(
@@ -192,16 +219,29 @@ const PracticeTestsPage = () => {
     [gradePayload],
   );
 
-  const topicsBySubject = useMemo(() => {
-    const map = new Map<number, Array<{ id: number; label: string }>>();
-    (topicPayload?.topics ?? []).forEach((topic) => {
-      const key = topic.subject_id;
-      const list = map.get(key) ?? [];
-      list.push({ id: topic.id, label: topic.topic_name ?? `Topic ${topic.id}` });
-      map.set(key, list);
-    });
-    return map;
-  }, [topicPayload]);
+  useEffect(() => {
+    if (!gradeOptions.length) {
+      setGradeFilter("");
+      return;
+    }
+    if (!gradeFilter || !gradeOptions.some((grade) => String(grade.id) === gradeFilter)) {
+      setGradeFilter(String(gradeOptions[0].id));
+    }
+  }, [gradeFilter, gradeOptions]);
+
+  useEffect(() => {
+    if (!gradeFilter) {
+      setSubjectFilter("");
+      return;
+    }
+    if (!subjectOptions.length) {
+      setSubjectFilter("");
+      return;
+    }
+    if (!subjectFilter || !subjectOptions.some((subject) => String(subject.id) === subjectFilter)) {
+      setSubjectFilter(String(subjectOptions[0].id));
+    }
+  }, [gradeFilter, subjectFilter, subjectOptions]);
 
   const listKey = useMemo(() => {
     if (!subjectFilter) {
@@ -211,7 +251,7 @@ const PracticeTestsPage = () => {
       subjectId: subjectFilter,
       includeInactive: includeInactive ? "true" : "false",
     });
-    if (gradeFilter && gradeFilter !== ALL_GRADES_FILTER) {
+    if (gradeFilter) {
       params.set("gradeLevelId", gradeFilter);
     }
     return `/admin/practice-tests?${params.toString()}`;
@@ -225,12 +265,22 @@ const PracticeTestsPage = () => {
 
   const tests = testPayload?.tests ?? [];
 
-  const availableTopics = useMemo(() => {
-    if (!formState.subjectId) {
-      return subjectFilter ? topicsBySubject.get(Number(subjectFilter)) ?? [] : [];
-    }
-    return topicsBySubject.get(Number(formState.subjectId)) ?? [];
-  }, [formState.subjectId, subjectFilter, topicsBySubject]);
+  const topicLabelMap = useMemo(() => {
+    const map = new Map<number, string>();
+    formTopicOptions.forEach((topic) => {
+      map.set(Number(topic.value), topic.label);
+    });
+    return map;
+  }, [formTopicOptions]);
+
+  const availableTopics = useMemo(
+    () =>
+      formTopicOptions.map((topic) => ({
+        id: Number(topic.value),
+        label: topic.label,
+      })),
+    [formTopicOptions],
+  );
 
   const difficultyTotal = useMemo(() => {
     return (Object.keys(formState.difficultyMix) as DifficultyField[]).reduce((sum, key) => {
@@ -243,19 +293,21 @@ const PracticeTestsPage = () => {
   const mixMatchesTarget = difficultyTotal === questionCountValue;
 
   const resetForm = useCallback(() => {
-    setFormState((prev) => ({
+    setFormState({
       ...defaultFormState,
-      subjectId: subjectFilter || prev.subjectId,
-    }));
+      gradeLevelId: gradeFilter || defaultFormState.gradeLevelId,
+      subjectId: subjectFilter || "",
+    });
     setEditingId(null);
-  }, [subjectFilter]);
+    setPreviewQuestions([]);
+  }, [gradeFilter, subjectFilter]);
 
   const openCreateModal = () => {
-    if (!subjectFilter) {
+    if (!gradeFilter || !subjectFilter) {
       toast({
         variant: "destructive",
-        title: "Select a subject",
-        description: "Choose a subject before creating a practice test.",
+        title: "Select a grade and subject",
+        description: "Choose a grade and subject before creating a practice test.",
       });
       return;
     }
@@ -277,7 +329,9 @@ const PracticeTestsPage = () => {
         title: test.title,
         description: test.description ?? "",
         subjectId: test.subject?.id ? String(test.subject.id) : subjectFilter,
-        gradeLevelId: test.gradeLevel?.id ? String(test.gradeLevel.id) : UNASSIGNED_GRADE,
+        gradeLevelId: test.gradeLevel?.id
+          ? String(test.gradeLevel.id)
+          : gradeFilter || UNASSIGNED_GRADE,
         durationMinutes: test.durationMinutes ? String(test.durationMinutes) : "",
         xpReward: test.xpReward !== undefined ? String(test.xpReward) : "0",
         questionCount: String(test.questionCount ?? 0),
@@ -288,6 +342,15 @@ const PracticeTestsPage = () => {
           HARD: String(test.difficultyMix?.HARD ?? 0),
         },
       });
+      setPreviewQuestions(
+        (test.questions ?? []).map((question) => ({
+          id: question.questionId,
+          questionText: question.questionText,
+          difficulty: question.difficulty,
+          topicId: question.topicId,
+          topicName: question.topicName ?? topicLabelMap.get(question.topicId) ?? null,
+        })),
+      );
       setIsFormOpen(true);
     } catch (error: unknown) {
       const message = getErrorMessage(error, "Unable to load practice test.");
@@ -312,6 +375,146 @@ const PracticeTestsPage = () => {
           : [...prev.topicIds, String(topicId)],
       };
     });
+    setPreviewQuestions([]);
+  };
+
+  const handleBuilderGradeChange = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      gradeLevelId: value,
+      subjectId: "",
+      topicIds: [],
+    }));
+    setPreviewQuestions([]);
+  };
+
+  const handleBuilderSubjectChange = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      subjectId: value,
+      topicIds: [],
+    }));
+    setPreviewQuestions([]);
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (!formState.subjectId) {
+      toast({
+        variant: "destructive",
+        title: "Select a subject",
+        description: "Choose a subject before generating questions.",
+      });
+      return;
+    }
+    if (formState.topicIds.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Select topics",
+        description: "Pick at least one topic before generating questions.",
+      });
+      return;
+    }
+    if (!mixMatchesTarget) {
+      toast({
+        variant: "destructive",
+        title: "Adjust difficulty mix",
+        description: "Ensure the difficulty totals add up to the question count.",
+      });
+      return;
+    }
+    if (questionCountValue === 0) {
+      toast({
+        variant: "destructive",
+        title: "Set question count",
+        description: "Enter how many questions you need before generating.",
+      });
+      return;
+    }
+
+    const topicIds = formState.topicIds.map((id) => Number(id));
+    setGeneratingQuestions(true);
+    try {
+      const responses = await Promise.all(
+        topicIds.map((topicId) =>
+          api.get<QuestionBankPayload>(
+            `/admin/questionbank?topicId=${topicId}&status=ACTIVE&isActive=true&page=1&limit=${QUESTION_BANK_PAGE_SIZE}`,
+          ),
+        ),
+      );
+
+      const uniqueMap = new Map<number, QuestionBankPreview>();
+      responses.forEach((response, index) => {
+        const payload = response.data?.data ?? response.data;
+        const fallbackTopicId = topicIds[index];
+        (payload?.questions ?? []).forEach((question) => {
+          uniqueMap.set(question.id, {
+            id: question.id,
+            questionText: question.questionText,
+            difficulty: question.difficulty,
+            topicId: question.topicId ?? fallbackTopicId,
+            topicName: question.topicName ?? topicLabelMap.get(question.topicId ?? fallbackTopicId) ?? null,
+          });
+        });
+      });
+
+      const combined = Array.from(uniqueMap.values());
+      if (combined.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No active questions",
+          description: "The selected topics do not have ACTIVE Question Bank items.",
+        });
+        return;
+      }
+
+      const buckets: Record<DifficultyField, QuestionBankPreview[]> = {
+        EASY: [],
+        MEDIUM: [],
+        HARD: [],
+      };
+
+      combined.forEach((question) => {
+        const normalized = (question.difficulty?.toUpperCase() ?? "MEDIUM") as DifficultyField;
+        if (buckets[normalized]) {
+          buckets[normalized].push(question);
+        }
+      });
+
+      const allocation: Record<DifficultyField, number> = {
+        EASY: Number(formState.difficultyMix.EASY) || 0,
+        MEDIUM: Number(formState.difficultyMix.MEDIUM) || 0,
+        HARD: Number(formState.difficultyMix.HARD) || 0,
+      };
+
+      const selection: QuestionBankPreview[] = [];
+      (Object.keys(allocation) as DifficultyField[]).forEach((key) => {
+        const pool = [...buckets[key]];
+        for (let i = pool.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        if (pool.length < allocation[key]) {
+          throw new Error(
+            `Need ${allocation[key]} ${difficultyLabels[key].toLowerCase()} questions but only ${pool.length} available.`,
+          );
+        }
+        selection.push(...pool.slice(0, allocation[key]));
+      });
+
+      setPreviewQuestions(selection.slice(0, questionCountValue));
+      toast({
+        title: "Questions generated",
+        description: "Review the preview below before saving.",
+      });
+    } catch (error: unknown) {
+      const message = getErrorMessage(
+        error,
+        "Unable to generate questions with the current filters. Adjust the mix or topics.",
+      );
+      toast({ variant: "destructive", title: "Generation failed", description: message });
+    } finally {
+      setGeneratingQuestions(false);
+    }
   };
 
   const handleSave = async () => {
@@ -339,6 +542,14 @@ const PracticeTestsPage = () => {
       });
       return;
     }
+    if (previewQuestions.length !== questionCountValue) {
+      toast({
+        variant: "destructive",
+        title: "Generate questions",
+        description: "Generate or refresh the questions preview to match the target count.",
+      });
+      return;
+    }
 
     const payload = {
       title: formState.title.trim(),
@@ -355,6 +566,7 @@ const PracticeTestsPage = () => {
         MEDIUM: Number(formState.difficultyMix.MEDIUM) || 0,
         HARD: Number(formState.difficultyMix.HARD) || 0,
       },
+      questionIds: previewQuestions.map((question) => question.id),
     };
 
     setSaving(true);
@@ -397,6 +609,15 @@ const PracticeTestsPage = () => {
 
   const selectedSubjectLabel =
     subjectOptions.find((subject) => String(subject.id) === subjectFilter)?.label ?? "Subject";
+  const selectedGradeLabel =
+    gradeOptions.find((grade) => String(grade.id) === gradeFilter)?.label ?? "Grade";
+  const formGradeLabel =
+    formState.gradeLevelId && formState.gradeLevelId !== UNASSIGNED_GRADE
+      ? gradeOptions.find((grade) => String(grade.id) === formState.gradeLevelId)?.label
+      : null;
+  const formSubjectLabel =
+    formSubjectOptions.find((subject) => String(subject.id) === formState.subjectId)?.label ??
+    selectedSubjectLabel;
 
   const renderDifficultySummary = (mix: Record<string, number>) => {
     return (
@@ -424,47 +645,54 @@ const PracticeTestsPage = () => {
             <RotateCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button onClick={openCreateModal} disabled={!subjectFilter}>
+          <Button onClick={openCreateModal} disabled={!subjectFilter || !gradeFilter}>
             <Plus className="mr-2 h-4 w-4" />
-            New practice test
+            Create Practice Test
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">Subject</label>
+          <label className="text-sm font-medium text-muted-foreground">Grade</label>
           <Select
-            value={subjectFilter}
+            value={gradeFilter}
             onValueChange={(value) => {
-              setSubjectFilter(value);
-              setGradeFilter(ALL_GRADES_FILTER);
+              setGradeFilter(value);
+              setSubjectFilter("");
             }}
-            disabled={subjectsLoading || subjectOptions.length === 0}
+            disabled={gradeOptions.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
+              <SelectValue placeholder={gradeOptions.length === 0 ? "No grades found" : "Select grade"} />
             </SelectTrigger>
             <SelectContent>
-              {subjectOptions.map((subject) => (
-                <SelectItem key={subject.id} value={String(subject.id)}>
-                  {subject.label}
+              {gradeOptions.map((grade) => (
+                <SelectItem key={grade.id} value={String(grade.id)}>
+                  {grade.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">Grade</label>
-          <Select value={gradeFilter} onValueChange={setGradeFilter} disabled={!subjectFilter}>
+          <label className="text-sm font-medium text-muted-foreground">Subject</label>
+          <Select
+            value={subjectFilter}
+            onValueChange={setSubjectFilter}
+            disabled={!gradeFilter || subjectsLoading || subjectOptions.length === 0}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="All grades" />
+              <SelectValue
+                placeholder={
+                  !gradeFilter ? "Select a grade first" : subjectsLoading ? "Loading subjects..." : "Select subject"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_GRADES_FILTER}>All grades</SelectItem>
-              {gradeOptions.map((grade) => (
-                <SelectItem key={grade.id} value={String(grade.id)}>
-                  {grade.label}
+              {subjectOptions.map((subject) => (
+                <SelectItem key={subject.id} value={String(subject.id)}>
+                  {subject.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -488,7 +716,15 @@ const PracticeTestsPage = () => {
         </div>
       </div>
 
-      {!subjectFilter ? (
+      {!gradeFilter ? (
+        <div className="rounded-3xl border border-dashed p-6 text-center text-muted-foreground">
+          Choose a grade to load subjects.
+        </div>
+      ) : subjectsLoading ? (
+        <div className="rounded-3xl border border-dashed p-6 text-center text-muted-foreground">
+          Loading subjects...
+        </div>
+      ) : !subjectFilter ? (
         <div className="rounded-3xl border border-dashed p-6 text-center text-muted-foreground">
           Choose a subject to load practice tests.
         </div>
@@ -498,7 +734,7 @@ const PracticeTestsPage = () => {
         </div>
       ) : tests.length === 0 ? (
         <div className="rounded-3xl border border-dashed p-6 text-center text-muted-foreground">
-          No practice tests found for {selectedSubjectLabel}. Create one to get started.
+          No practice tests found for {selectedSubjectLabel} ({selectedGradeLabel}). Create one to get started.
         </div>
       ) : (
         <div className="space-y-4">
@@ -522,7 +758,11 @@ const PracticeTestsPage = () => {
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     {test.subject ? <span>{test.subject.name}</span> : null}
-                    {test.gradeLevel ? <span>· {test.gradeLevel.name}</span> : null}
+                    {test.gradeLevel ? (
+                      <span>
+                        &middot; {test.gradeLevel.name}
+                      </span>
+                    ) : null}
                     <span>
                       Updated {test.updatedAt ? dayjs(test.updatedAt).fromNow() : "recently"}
                     </span>
@@ -609,11 +849,10 @@ const PracticeTestsPage = () => {
             <DialogTitle>{editingId ? "Edit practice test" : "Create practice test"}</DialogTitle>
             <DialogDescription>
               {formState.subjectId
-                ? `Subject: ${
-                    subjectOptions.find((subject) => String(subject.id) === formState.subjectId)?.label ??
-                    selectedSubjectLabel
-                  }`
-                : `Subject: ${selectedSubjectLabel}`}
+                ? `Scope: ${[formGradeLabel ?? selectedGradeLabel, formSubjectLabel]
+                    .filter(Boolean)
+                    .join(" · ")}`
+                : `Scope: ${[selectedGradeLabel, selectedSubjectLabel].filter(Boolean).join(" · ")}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -621,20 +860,15 @@ const PracticeTestsPage = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Subject</label>
               <Select
-                value={formState.subjectId || subjectFilter}
-                onValueChange={(value) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    subjectId: value,
-                    topicIds: [],
-                  }))
-                }
+                value={formState.subjectId}
+                onValueChange={handleBuilderSubjectChange}
+                disabled={formSubjectOptions.length === 0}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjectOptions.map((subject) => (
+                  {formSubjectOptions.map((subject) => (
                     <SelectItem key={subject.id} value={String(subject.id)}>
                       {subject.label}
                     </SelectItem>
@@ -646,12 +880,7 @@ const PracticeTestsPage = () => {
               <label className="text-sm font-medium text-muted-foreground">Grade</label>
               <Select
                 value={formState.gradeLevelId}
-                onValueChange={(value) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    gradeLevelId: value,
-                  }))
-                }
+                onValueChange={handleBuilderGradeChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Optional" />
@@ -724,9 +953,10 @@ const PracticeTestsPage = () => {
                   type="number"
                   min={1}
                   value={formState.questionCount}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, questionCount: event.target.value }))
-                  }
+                  onChange={(event) => {
+                    setFormState((prev) => ({ ...prev, questionCount: event.target.value }));
+                    setPreviewQuestions([]);
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -749,21 +979,27 @@ const PracticeTestsPage = () => {
               <label className="text-sm font-medium text-muted-foreground">Difficulty mix</label>
               <div className="grid gap-3 md:grid-cols-3">
                 {(Object.keys(difficultyLabels) as DifficultyField[]).map((key) => (
-                  <div key={key} className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">{difficultyLabels[key]}</p>
-                    <Input
-                      type="number"
+                  <div key={key} className="space-y-2 rounded-2xl border p-3">
+                    <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                      <span>{difficultyLabels[key]}</span>
+                      <span>{formState.difficultyMix[key]} q</span>
+                    </div>
+                    <input
+                      type="range"
                       min={0}
-                      value={formState.difficultyMix[key]}
-                      onChange={(event) =>
+                      max={Math.max(questionCountValue, 20)}
+                      step={1}
+                      value={Number(formState.difficultyMix[key])}
+                      onChange={(event) => {
                         setFormState((prev) => ({
                           ...prev,
                           difficultyMix: {
                             ...prev.difficultyMix,
                             [key]: event.target.value,
                           },
-                        }))
-                      }
+                        }));
+                        setPreviewQuestions([]);
+                      }}
                     />
                   </div>
                 ))}
@@ -778,13 +1014,20 @@ const PracticeTestsPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setFormState((prev) => ({ ...prev, topicIds: [] }))}
+                  onClick={() => {
+                    setFormState((prev) => ({ ...prev, topicIds: [] }));
+                    setPreviewQuestions([]);
+                  }}
                   disabled={formState.topicIds.length === 0}
                 >
                   Clear
                 </Button>
               </div>
-              {availableTopics.length === 0 ? (
+              {builderTopicsLoading ? (
+                <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
+                  Loading topics for the selected subject...
+                </p>
+              ) : availableTopics.length === 0 ? (
                 <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
                   Select a subject to load available topics.
                 </p>
@@ -813,13 +1056,78 @@ const PracticeTestsPage = () => {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-sm font-medium text-muted-foreground">Question sourcing</label>
+              {previewQuestions.length > 0 ? (
+                <span className="text-xs text-muted-foreground">
+                  {previewQuestions.length}/{questionCountValue || formState.questionCount} ready
+                </span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateQuestions}
+                disabled={generatingQuestions}
+              >
+                {generatingQuestions ? "Generating..." : "Generate questions"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewQuestions([])}
+                disabled={previewQuestions.length === 0 || generatingQuestions}
+              >
+                Clear preview
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Builds questions from ACTIVE Question Bank items that match the selected topics and difficulty mix.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Preview ({previewQuestions.length}/{questionCountValue || formState.questionCount})
+            </label>
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border p-3">
+              {previewQuestions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Generate questions to preview this practice test.</p>
+              ) : (
+                previewQuestions.map((question, index) => (
+                  <div key={question.id} className="space-y-1 rounded-2xl border bg-card/60 p-3 text-sm">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>#{index + 1}</span>
+                      <span>{question.topicName ?? topicLabelMap.get(question.topicId) ?? "Topic"}</span>
+                    </div>
+                    <p className="font-medium">{question.questionText}</p>
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline">
+                        {difficultyLabels[question.difficulty as DifficultyField] ?? question.difficulty}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={closeForm} disabled={saving}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !mixMatchesTarget || formState.topicIds.length === 0}
+              disabled={
+                saving ||
+                !mixMatchesTarget ||
+                formState.topicIds.length === 0 ||
+                previewQuestions.length !== questionCountValue
+              }
             >
               {saving ? "Saving..." : editingId ? "Save changes" : "Create practice test"}
             </Button>

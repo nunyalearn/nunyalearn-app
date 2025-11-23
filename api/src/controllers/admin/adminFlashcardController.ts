@@ -6,6 +6,7 @@ import path from "path";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapFlashcardDto } from "../../utils/dtoMappers";
 
 interface FlashcardPayload {
   topicId: number;
@@ -147,31 +148,9 @@ export const listAdminFlashcards = async (req: Request, res: Response, next: Nex
       }),
     ]);
 
-    const normalized = flashcards.map((flashcard) => ({
-      ...flashcard,
-      Topic: flashcard.Topic
-        ? {
-            id: flashcard.Topic.id,
-            name: flashcard.Topic.topic_name,
-            subject: flashcard.Topic.Subject
-              ? {
-                  id: flashcard.Topic.Subject.id,
-                  name: flashcard.Topic.Subject.subject_name,
-                  gradeLevel: flashcard.Topic.Subject.GradeLevel
-                    ? {
-                        id: flashcard.Topic.Subject.GradeLevel.id,
-                        name: flashcard.Topic.Subject.GradeLevel.name,
-                      }
-                    : null,
-                }
-              : null,
-          }
-        : null,
-    }));
-
     return res.json({
       success: true,
-      data: { flashcards: normalized },
+      data: flashcards.map((flashcard) => mapFlashcardDto(flashcard)),
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -192,7 +171,10 @@ export const getAdminFlashcard = async (req: Request, res: Response, next: NextF
       return res.status(404).json({ success: false, message: "Flashcard not found" });
     }
 
-    return res.json({ success: true, data: { flashcard } });
+    return res.json({
+      success: true,
+      data: { flashcard: mapFlashcardDto(flashcard) },
+    });
   } catch (error) {
     next(error);
   }
@@ -237,7 +219,10 @@ export const createAdminFlashcard = async (req: Request, res: Response, next: Ne
 
     await recordAdminAction(req.user?.id, "Flashcard", "CREATE", flashcard.id, flashcard.front_text);
 
-    return res.status(201).json({ success: true, data: { flashcard } });
+    return res.status(201).json({
+      success: true,
+      data: { flashcard: mapFlashcardDto(flashcard) },
+    });
   } catch (error) {
     next(error);
   }
@@ -294,7 +279,10 @@ export const updateAdminFlashcard = async (req: Request, res: Response, next: Ne
 
     await recordAdminAction(req.user?.id, "Flashcard", "UPDATE", id, flashcard.front_text);
 
-    return res.json({ success: true, data: { flashcard } });
+    return res.json({
+      success: true,
+      data: { flashcard: mapFlashcardDto(flashcard) },
+    });
   } catch (error) {
     next(error);
   }
@@ -312,7 +300,11 @@ export const deleteAdminFlashcard = async (req: Request, res: Response, next: Ne
 
     await recordAdminAction(req.user?.id, "Flashcard", "DELETE", id);
 
-    return res.json({ success: true, message: "Flashcard deleted" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Flashcard deleted",
+    });
   } catch (error) {
     next(error);
   }

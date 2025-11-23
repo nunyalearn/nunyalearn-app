@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -15,7 +15,7 @@ type DataTableProps<T> = {
   data?: T[];
   isLoading?: boolean;
   searchable?: boolean;
-  emptyLabel?: string;
+  emptyLabel?: ReactNode;
 };
 
 export function DataTable<T extends Record<string, unknown>>({

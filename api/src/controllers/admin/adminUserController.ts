@@ -5,6 +5,7 @@ import { z } from "zod";
 import prisma from "../../config/db";
 import { Parser } from "json2csv";
 import { recordAdminAction } from "../../services/auditService";
+import { mapUserDto } from "../../utils/dtoMappers";
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -60,7 +61,7 @@ const updateUserSchema = z
 
 const sanitizeUser = (user: any) => {
   const { password_hash, ...rest } = user;
-  return rest;
+  return mapUserDto(rest);
 };
 
 const buildUserWhere = (params: z.infer<typeof listQuerySchema>): Prisma.UserWhereInput => {
@@ -131,9 +132,11 @@ export const listUsers = async (req: Request, res: Response, next: NextFunction)
       }),
     ]);
 
+    const normalizedUsers = users.map((entry) => mapUserDto(entry));
+
     return res.json({
       success: true,
-      data: { users },
+      data: { users: normalizedUsers },
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -165,7 +168,7 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    return res.json({ success: true, data: { user } });
+    return res.json({ success: true, data: { user: mapUserDto(user) } });
   } catch (error) {
     next(error);
   }
@@ -188,7 +191,10 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
     await recordAdminAction(req.user?.id, "User", "CREATE", user.id, user.email);
 
-    return res.status(201).json({ success: true, data: { user: sanitizeUser(user) } });
+    return res.status(201).json({
+      success: true,
+      data: { user: sanitizeUser(user) },
+    });
   } catch (error) {
     next(error);
   }
@@ -227,7 +233,10 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 
     await recordAdminAction(req.user?.id, "User", "UPDATE", id, user.email);
 
-    return res.json({ success: true, data: { user } });
+    return res.json({
+      success: true,
+      data: { user: mapUserDto(user) },
+    });
   } catch (error) {
     next(error);
   }
@@ -252,8 +261,8 @@ export const deactivateUser = async (req: Request, res: Response, next: NextFunc
 
     return res.json({
       success: true,
+      data: null,
       message: "User deactivated",
-      data: { user },
     });
   } catch (error) {
     next(error);

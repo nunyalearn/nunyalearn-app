@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../../config/db";
 import { recordAdminAction } from "../../services/auditService";
+import { mapBadgeDto } from "../../utils/dtoMappers";
 
 const badgeBodySchema = z.object({
   name: z.string().min(1),
@@ -37,7 +38,10 @@ export const createBadge = async (req: Request, res: Response, next: NextFunctio
 
     await recordAdminAction(req.user?.id, "Badge", "CREATE", badge.id, badge.name);
 
-    return res.status(201).json({ success: true, data: { badge } });
+    return res.status(201).json({
+      success: true,
+      data: { badge: mapBadgeDto(badge) },
+    });
   } catch (error) {
     next(error);
   }
@@ -60,7 +64,10 @@ export const updateBadge = async (req: Request, res: Response, next: NextFunctio
 
     await recordAdminAction(req.user?.id, "Badge", "UPDATE", params.id, badge.name);
 
-    return res.json({ success: true, data: { badge } });
+    return res.json({
+      success: true,
+      data: { badge: mapBadgeDto(badge) },
+    });
   } catch (error) {
     next(error);
   }
@@ -76,7 +83,11 @@ export const deleteBadge = async (req: Request, res: Response, next: NextFunctio
 
     await recordAdminAction(req.user?.id, "Badge", "DELETE", params.id, deleted.name);
 
-    return res.json({ success: true, message: "Badge deleted" });
+    return res.json({
+      success: true,
+      data: null,
+      message: "Badge deleted",
+    });
   } catch (error) {
     next(error);
   }
@@ -97,8 +108,10 @@ export const listBadges = async (req: Request, res: Response, next: NextFunction
 
     return res.json({
       success: true,
-      data: { badges },
-      pagination: { page, limit, total },
+      data: {
+        badges: badges.map((badge) => mapBadgeDto(badge)),
+        pagination: { page, limit, total },
+      },
     });
   } catch (error) {
     next(error);
@@ -114,7 +127,10 @@ export const getBadge = async (req: Request, res: Response, next: NextFunction) 
       return res.status(404).json({ success: false, message: "Badge not found" });
     }
 
-    return res.json({ success: true, data: { badge } });
+    return res.json({
+      success: true,
+      data: { badge: mapBadgeDto(badge) },
+    });
   } catch (error) {
     next(error);
   }
