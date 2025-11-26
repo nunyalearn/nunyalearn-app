@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nunyalearn - Quiz Player</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+      }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "text-light": "#0d1b12",
+              "text-dark": "#e8f4ec",
+              "card-light": "#ffffff",
+              "card-dark": "#1a2c20",
+              "border-light": "#e1e7e3",
+              "border-dark": "#2a3d31",
+              "success": "#13ec5b",
+              "error": "#ef5350"
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-10 flex flex-col bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-4 pt-4">
+<div class="flex items-center justify-between pb-2">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">close</span>
+</button>
+<h1 class="flex-1 text-center text-lg font-bold tracking-tight">Chapter 1: Biology Basics</h1>
+<div class="flex items-center justify-center gap-1 rounded-full bg-primary/20 px-3 py-1.5 text-sm font-semibold text-primary">
+<span class="material-symbols-outlined !text-base">timer</span>
+<span>01:25</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-2">
+<div class="flex justify-end"><p class="text-sm font-medium">5/10</p></div>
+<div class="rounded-full bg-border-light dark:bg-border-dark"><div class="h-2 rounded-full bg-primary" style="width: 50%;"></div></div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex flex-1 flex-col p-4">
+<!-- Question Card -->
+<div class="flex flex-col gap-6 rounded-xl bg-card-light dark:bg-card-dark p-6 shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+<h2 class="text-2xl font-bold leading-tight">What is the powerhouse of the cell?</h2>
+<!-- Answer Options -->
+<div class="flex flex-col gap-3">
+<!-- Correct Answer Example -->
+<label class="flex cursor-pointer items-center gap-4 rounded-lg border-2 border-success bg-success/10 p-4 ring-2 ring-success/20 transition-all">
+<div class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-success bg-success">
+<span class="material-symbols-outlined !text-sm text-black">check</span>
+</div>
+<p class="flex-1 text-base font-medium">Mitochondria</p>
+</label>
+<!-- Incorrect Answer Example -->
+<label class="flex cursor-pointer items-center gap-4 rounded-lg border-2 border-error bg-error/10 p-4 ring-2 ring-error/20 transition-all">
+<div class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-error bg-error">
+<span class="material-symbols-outlined !text-sm text-white">close</span>
+</div>
+<p class="flex-1 text-base font-medium">Nucleus</p>
+</label>
+<!-- Default State -->
+<label class="flex cursor-pointer items-center gap-4 rounded-lg border-2 border-border-light dark:border-border-dark p-4 transition-all hover:border-primary/50 dark:hover:border-primary/50">
+<div class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-border-light dark:border-border-dark"></div>
+<p class="flex-1 text-base font-medium">Ribosome</p>
+</label>
+<label class="flex cursor-pointer items-center gap-4 rounded-lg border-2 border-border-light dark:border-border-dark p-4 transition-all hover:border-primary/50 dark:hover:border-primary/50">
+<div class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-border-light dark:border-border-dark"></div>
+<p class="flex-1 text-base font-medium">Endoplasmic Reticulum</p>
+</label>
+</div>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="sticky bottom-0 flex items-center gap-4 bg-background-light/80 dark:bg-background-dark/80 p-4 backdrop-blur-sm">
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary/20 px-4 py-3 text-primary transition-colors hover:bg-primary/30">
+<span class="material-symbols-outlined">lightbulb</span>
+<span class="font-bold">Hint</span>
+</button>
+<button class="flex-1 rounded-lg bg-primary py-3.5 text-center font-bold text-black transition-transform active:scale-95">Next</button>
+</footer>
+<!-- XP Popup Zone (Example shown statically) -->
+<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+<div class="flex flex-col items-center gap-2 rounded-xl bg-black/70 px-6 py-4 text-white backdrop-blur-sm">
+<p class="text-sm font-semibold text-primary">Correct!</p>
+<p class="text-2xl font-bold">+25 XP</p>
+</div>
+</div>
+</div>
+</body></html>

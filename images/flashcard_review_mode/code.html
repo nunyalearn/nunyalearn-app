@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NunyaLearn - Flashcard Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+          },
+          fontFamily: {
+            "display": ["Lexend", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "1rem",
+            "xl": "1.5rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Top App Bar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center text-slate-900 dark:text-slate-100">Review Mode</h2>
+<div class="size-10 shrink-0"></div>
+</div>
+<!-- Progress Ring & Header -->
+<div class="flex flex-col items-center gap-4 px-4 pt-4">
+<div class="relative flex h-32 w-32 items-center justify-center">
+<svg class="h-full w-full -rotate-90" viewbox="0 0 120 120">
+<circle class="stroke-primary/20 dark:stroke-primary/10" cx="60" cy="60" fill="none" r="54" stroke-width="12"></circle>
+<circle class="stroke-primary" cx="60" cy="60" fill="none" r="54" stroke-dasharray="339.292" stroke-dashoffset="203.5752" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="text-2xl font-bold text-slate-900 dark:text-slate-100">5
+            <span class="text-base font-medium text-slate-500 dark:text-slate-400">/ 12</span></span>
+</div>
+</div>
+<div class="text-center">
+<p class="text-lg font-medium leading-normal text-slate-800 dark:text-slate-200">Reviewing Difficult Cards</p>
+<p class="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400">You marked 12 cards to review</p>
+</div>
+</div>
+<!-- Main Content: Flashcard Area -->
+<main class="flex flex-1 flex-col items-center justify-center p-4">
+<div class="w-full max-w-md">
+<!-- Card Back Example -->
+<div class="flex flex-col items-stretch justify-start rounded-xl bg-white dark:bg-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
+<div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-4 p-6 text-center">
+<p class="text-sm font-normal uppercase tracking-wider text-primary">Answer</p>
+<p class="text-lg font-normal leading-relaxed text-slate-700 dark:text-slate-300">The process by which green plants and some other organisms use sunlight to synthesize foods with the help of chlorophyll pigment.</p>
+<div class="pt-4">
+<button class="flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary/20 text-primary mx-auto hover:bg-primary/30 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-2xl">check_circle</span>
+</button>
+<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Mark as Mastered</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Indicators -->
+<div class="flex flex-col items-center justify-center pb-8 pt-4">
+<div class="flex w-full flex-row items-center justify-center gap-2 py-5">
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-6 rounded-full bg-primary"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+<div class="h-1.5 w-4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+</div>
+<p class="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400">Swipe for the next card</p>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NunyaLearn Flashcards</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "text-light": "#0d1b12",
+            "text-dark": "#e0f8e7",
+            "text-secondary-light": "#4c9a66",
+            "text-secondary-dark": "#a3d9b4",
+            "card-light": "#ffffff",
+            "card-dark": "#183120"
+          },
+          fontFamily: {
+            "display": ["Lexend", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "1rem",
+            "xl": "1.5rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-10 flex items-center justify-between bg-background-light/80 p-4 pb-2 backdrop-blur-sm dark:bg-background-dark/80">
+<button class="flex size-10 items-center justify-center text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="flex-1 text-center text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Flashcards</h1>
+<div class="size-10"></div>
+</header>
+<main class="flex flex-1 flex-col px-4">
+<div class="flex flex-1 flex-col items-center justify-center text-center">
+<div class="mb-8">
+<svg class="h-40 w-40 text-text-light dark:text-text-dark" fill="none" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+<path class="text-primary/20 dark:text-primary/10" d="M35 30.5C35 24.149 40.149 19 46.5 19H103.5C109.851 19 115 24.149 115 30.5V114.5C115 120.851 109.851 126 103.5 126H46.5C40.149 126 35 120.851 35 114.5V30.5Z" fill="currentColor" transform="translate(15, 15) rotate(10 75 72.5)"></path>
+<path class="text-primary/40 dark:text-primary/20" d="M40 25.5C40 19.149 45.149 14 51.5 14H108.5C114.851 14 120 19.149 120 25.5V109.5C120 115.851 114.851 121 108.5 121H51.5C45.149 121 40 115.851 40 109.5V25.5Z" fill="currentColor" transform="translate(5, 5) rotate(5 80 67.5)"></path>
+<path class="stroke-text-secondary-light/60 dark:stroke-text-secondary-dark/50 fill-card-light dark:fill-card-dark" d="M45 20.5C45 14.149 50.149 9 56.5 9H113.5C119.851 9 125 14.149 125 20.5V119.5C125 125.851 119.851 131 113.5 131H56.5C50.149 131 45 125.851 45 119.5V20.5Z" stroke-width="3"></path>
+<line class="stroke-text-secondary-light/40 dark:stroke-text-secondary-dark/30" stroke-width="2" x1="65" x2="105" y1="50" y2="50"></line>
+<line class="stroke-text-secondary-light/40 dark:stroke-text-secondary-dark/30" stroke-width="2" x1="65" x2="115" y1="70" y2="70"></line>
+<line class="stroke-text-secondary-light/40 dark:stroke-text-secondary-dark/30" stroke-width="2" x1="65" x2="95" y1="90" y2="90"></line>
+</svg>
+</div>
+<h2 class="text-2xl font-bold text-text-light dark:text-text-dark">Your flashcard journey begins here!</h2>
+<p class="mt-2 max-w-sm text-base text-text-secondary-light dark:text-text-secondary-dark">No flashcard sets yet! Start creating to master new topics.</p>
+</div>
+<div class="pb-6 pt-4">
+<button class="w-full rounded-full bg-primary py-4 text-base font-bold text-black shadow-lg shadow-primary/30 transition-transform active:scale-95 dark:text-text-light">
+          Create First Flashcard Set
+        </button>
+</div>
+</main>
+</div>
+
+</body></html>

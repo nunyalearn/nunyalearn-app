@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NunyaLearn Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4CAF50",
+              "background-light": "#F7F8FA",
+              "background-dark": "#102216",
+              "card-light": "#FFFFFF",
+              "card-dark": "#1A2E22",
+              "text-primary-light": "#333333",
+              "text-primary-dark": "#E0E0E0",
+              "text-secondary-light": "#888888",
+              "text-secondary-dark": "#A0A0A0",
+              "border-light": "#EAECEF",
+              "border-dark": "#2C3E34"
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.75rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+            boxShadow: {
+              'soft': '0 4px 12px 0 rgba(0, 0, 0, 0.05)',
+              'soft-dark': '0 4px 12px 0 rgba(0, 0, 0, 0.1)'
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-primary-light dark:text-text-primary-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm z-10">
+<h1 class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1">Profile</h1>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-transparent text-text-primary-light dark:text-text-primary-dark">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<main class="flex flex-col gap-6 p-4">
+<!-- Profile Header -->
+<section class="flex w-full flex-col gap-4 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 shadow-soft dark:shadow-soft-dark" data-alt="User avatar with a colorful gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOTzH8Qhr7Ke429IZUY0jF8gjTi5VUgjcO3bPPOOOaoEkuM0H97gOzVpBJQBqM_LXswsvrJTOuIfRUTWx3thh7M59kYvX02Z_pCRoG8_Qsjfghsj9PN3PLE58La_56PuM4Mwy3FDpXrfybZEAq4vOM39eLadqFl3_tcv4btMKDke8Omnp9LpNmyI_YOzgbzloe4xuJQsxB0CIOdIt2NAloF6Gw643gRKDkjLIbssx9tBMUU7xAmZWDWUTmKx0Sxqoq62ZlBOB0XJce");'></div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-text-primary-light dark:text-text-primary-dark text-2xl font-bold leading-tight tracking-[-0.015em] text-center">Alex Doe</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-base font-normal leading-normal text-center">@alexdoe</p>
+</div>
+</section>
+<!-- Stats -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium leading-normal">Total XP</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl">star</span>
+<p class="text-text-primary-light dark:text-text-primary-dark tracking-light text-2xl font-bold leading-tight">15,230</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium leading-normal">Current Streak</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl">local_fire_department</span>
+<p class="text-text-primary-light dark:text-text-primary-dark tracking-light text-2xl font-bold leading-tight">14 days</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium leading-normal">Achievements</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl">emoji_events</span>
+<p class="text-text-primary-light dark:text-text-primary-dark tracking-light text-2xl font-bold leading-tight">12 / 50</p>
+</div>
+</div>
+</section>
+<!-- Latest Achievements -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-text-primary-light dark:text-text-primary-dark text-xl font-bold leading-tight tracking-[-0.015em]">Latest Achievements</h2>
+<a class="text-primary text-sm font-bold" href="#">View All</a>
+</div>
+<div class="grid grid-cols-[repeat(auto-fit,minmax(80px,1fr))] gap-4">
+<div class="flex flex-col items-center gap-2 text-center">
+<div class="w-20 h-20 p-4 bg-primary/10 rounded-full flex items-center justify-center">
+<img alt="Perfect score badge" class="h-10 w-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuds_kQhXJiSSWZ-rmpjuozk7JBHruQetvT6KQFu0YP1jQ1JTXQqJhyES6EXxr6ryeO3vY-3n3u5e9_lPGC53JxNYKV_YJUQ2QgIx6z5hA9CmtRLIZdH4hlqMPp7xEvQxiIKtAffrYSMco5zJQ5RnLpe-41azyoLrOCypaymVeUujbHpZkLAtO2zmKJll5uKFo1qqmW5CgcrjuLeliZrjF-BQkaXEDWo2Y0tv3rMMg1aOdg-Vtx6GVJ9vZ2F8ndCTt12t-ACoEwmnk"/>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2 text-center">
+<div class="w-20 h-20 p-4 bg-primary/10 rounded-full flex items-center justify-center">
+<img alt="Quiz master badge" class="h-10 w-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl0eMRFlxiQv-AO1yt0flvdH0V8DM4-tEjIftRZGv8gY3ET36kDi3sdCHVY4GKSCJct-uZ1eaO1suFyGnA607NHn7oc3qSd5qs-OUBFinkNTRF8zgzg3j5LZ5hWGrsWE8Zcvk7j8hCF7jVDoDhwSaGfTY_AcPmXwKibjEdTELpZK3GCmJrhJCvQompwumKaAcXGeBzwqZUGjLPLIq0BsWCqn8yiEdObCpH3FpNwSQUvAJyjBVQ6XE0s1o0CtcJAgMFQUtKzpTKqGPq"/>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2 text-center">
+<div class="w-20 h-20 p-4 bg-primary/10 rounded-full flex items-center justify-center">
+<img alt="Knowledge explorer badge" class="h-10 w-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxqe42Yb9_JNyNTDKZbIkpXRu-d_QNm6H1T8pKCqyhJrQ1H3MH2gR2mopanyo8OxYME5D5j9HA8l3msh62WbxwfPmaVceDrlRVLU_TaeDIMx0oWYVxJX9kql3CQ5kM0KcM29Vo85IfHn0Ux3ii6bhuR4XWPCml3--bcyU3ux-sDrw9LIsZzNVf07m--UcEDC71HHpTXahI_TA1Iii7ZDJrC_KGGpkRO95yiOZmGVr5rvy4zfMFf4B94QPXWjjRQ0Zrg-sT304k715s"/>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2 text-center">
+<div class="w-20 h-20 p-4 bg-primary/10 rounded-full flex items-center justify-center">
+<img alt="Daily learner badge" class="h-10 w-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByyWafGmJYWgCuZ9QC3wNGzjzQ7utqckTC4Kfa0zvtKwJ_g9dv5jFcD9gf6mV6NH5yVHRrkROvCIOTgnX66lKnL0jZHNexjxJIzoAa9QteX-ggdA1_F9bP9edT_sVxESNaaEc_AbF83FY_mN58LKFq_NaQbEFAv2HfXUiJr1D89UQFYV76wtSpMFQ2tGVBKI_DetVgZSPGsQlHdoz6-fCWsHofcytmT5JDz0Hkgf6lBXZaUmjHW70ZfN7xigPXc1XhWu289kYWvFUH"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Attempts -->
+<section class="flex flex-col gap-4">
+<h2 class="text-text-primary-light dark:text-text-primary-dark text-xl font-bold leading-tight tracking-[-0.015em] px-1">Recent Attempts</h2>
+<div class="flex flex-col gap-3">
+<div class="flex w-full items-center gap-4 rounded-lg bg-card-light dark:bg-card-dark p-4 border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">calculate</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-text-primary-light dark:text-text-primary-dark">Advanced Algebra Quiz</p>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Today at 2:15 PM</p>
+</div>
+<p class="font-bold text-primary">Score: 95%</p>
+</div>
+<div class="flex w-full items-center gap-4 rounded-lg bg-card-light dark:bg-card-dark p-4 border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">biotech</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-text-primary-light dark:text-text-primary-dark">Cellular Biology Lesson</p>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Yesterday at 11:30 AM</p>
+</div>
+<p class="font-bold text-primary">Completed</p>
+</div>
+<div class="flex w-full items-center gap-4 rounded-lg bg-card-light dark:bg-card-dark p-4 border border-border-light dark:border-border-dark shadow-soft dark:shadow-none">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">public</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-text-primary-light dark:text-text-primary-dark">World History: Part II</p>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">2 days ago</p>
+</div>
+<p class="font-bold text-primary">Score: 88%</p>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

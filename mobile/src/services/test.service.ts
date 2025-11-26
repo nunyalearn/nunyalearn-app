@@ -13,12 +13,26 @@ const extract = <T>(payload: ApiResponse<T> | T): T => {
   return payload as T;
 };
 
+export type PracticeTestAttemptSummary = {
+  attemptId?: number;
+  score?: number;
+  totalQuestions?: number;
+  questionCount?: number;
+  completedQuestions?: number;
+  [key: string]: unknown;
+};
+
 export type PracticeTestSummary = {
   id: number;
   title?: string;
   description?: string | null;
   questionCount?: number;
   durationMinutes?: number | null;
+  xpReward?: number | null;
+  isActive?: boolean;
+  difficultyMix?: string | null;
+  latestAttempt?: PracticeTestAttemptSummary | null;
+  progressPercent?: number | null;
   [key: string]: unknown;
 };
 

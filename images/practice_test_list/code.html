@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NunyaLearn - Practice Tests</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "card-light": "#ffffff",
+              "card-dark": "#1a2c20",
+              "text-primary-light": "#0d1b12",
+              "text-primary-dark": "#e0f5e7",
+              "text-secondary-light": "#4c9a66",
+              "text-secondary-dark": "#7bbf94",
+              "search-bg-light": "#e7f3eb",
+              "search-bg-dark": "#253f2e"
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<button class="flex size-12 shrink-0 items-center justify-center text-text-primary-light dark:text-text-primary-dark">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Practice Tests</h1>
+<button class="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-transparent text-text-primary-light dark:text-text-primary-dark">
+<span class="material-symbols-outlined text-2xl">tune</span>
+</button>
+</header>
+<!-- Search Bar -->
+<div class="px-4 py-3">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+<div class="text-text-secondary-light dark:text-text-secondary-dark flex border-none bg-search-bg-light dark:bg-search-bg-dark items-center justify-center pl-4 rounded-l-xl">
+<span class="material-symbols-outlined text-2xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-text-primary-light dark:text-text-primary-dark focus:outline-0 focus:ring-0 border-none bg-search-bg-light dark:bg-search-bg-dark focus:border-none h-full placeholder:text-text-secondary-light dark:placeholder:text-text-secondary-dark px-4 pl-2 text-base font-normal leading-normal" placeholder="Search for a test" value=""/>
+</div>
+</label>
+</div>
+<main class="flex flex-col gap-2 pb-4">
+<!-- Test Card 1 -->
+<div class="px-4">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.1)] bg-card-light dark:bg-card-dark p-4 gap-4">
+<div class="flex w-full flex-col items-stretch justify-center gap-2">
+<p class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em]">Introduction to Calculus</p>
+<div class="flex items-center gap-4 text-text-secondary-light dark:text-text-secondary-dark">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">quiz</span>
+<p class="text-sm font-normal leading-normal">40 Questions</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">timer</span>
+<p class="text-sm font-normal leading-normal">45 Mins</p>
+</div>
+</div>
+</div>
+<button class="flex w-full min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-text-primary-light text-base font-medium leading-normal">
+<span class="truncate">Start Test</span>
+</button>
+</div>
+</div>
+<!-- Test Card 2 -->
+<div class="px-4">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.1)] bg-card-light dark:bg-card-dark p-4 gap-4">
+<div class="flex w-full flex-col items-stretch justify-center gap-2">
+<p class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em]">Organic Chemistry: Chapter 5 Review</p>
+<div class="flex items-center gap-4 text-text-secondary-light dark:text-text-secondary-dark">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">quiz</span>
+<p class="text-sm font-normal leading-normal">25 Questions</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">timer</span>
+<p class="text-sm font-normal leading-normal">30 Mins</p>
+</div>
+</div>
+</div>
+<button class="flex w-full min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-text-primary-light text-base font-medium leading-normal">
+<span class="truncate">Start Test</span>
+</button>
+</div>
+</div>
+<!-- Test Card 3 -->
+<div class="px-4">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.1)] bg-card-light dark:bg-card-dark p-4 gap-4">
+<div class="flex w-full flex-col items-stretch justify-center gap-2">
+<p class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em]">World History: The Roman Empire</p>
+<div class="flex items-center gap-4 text-text-secondary-light dark:text-text-secondary-dark">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">quiz</span>
+<p class="text-sm font-normal leading-normal">60 Questions</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">timer</span>
+<p class="text-sm font-normal leading-normal">75 Mins</p>
+</div>
+</div>
+</div>
+<button class="flex w-full min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-text-primary-light text-base font-medium leading-normal">
+<span class="truncate">Start Test</span>
+</button>
+</div>
+</div>
+<!-- Test Card 4 -->
+<div class="px-4">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.1)] bg-card-light dark:bg-card-dark p-4 gap-4">
+<div class="flex w-full flex-col items-stretch justify-center gap-2">
+<p class="text-text-primary-light dark:text-text-primary-dark text-lg font-bold leading-tight tracking-[-0.015em]">Algebra Basics Final Exam</p>
+<div class="flex items-center gap-4 text-text-secondary-light dark:text-text-secondary-dark">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">quiz</span>
+<p class="text-sm font-normal leading-normal">50 Questions</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base">timer</span>
+<p class="text-sm font-normal leading-normal">60 Mins</p>
+</div>
+</div>
+</div>
+<button class="flex w-full min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-text-primary-light text-base font-medium leading-normal">
+<span class="truncate">Start Test</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

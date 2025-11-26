@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import type { NavigatorScreenParams } from "@react-navigation/native";
 import { ActivityIndicator, View } from "react-native";
 
 import LoginScreen from "../screens/LoginScreen";
@@ -14,10 +15,12 @@ import PracticeTestListScreen from "../screens/PracticeTestListScreen";
 import TestPlayerScreen from "../screens/TestPlayerScreen";
 import TestResultScreen from "../screens/TestResultScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import HomeScreen from "../screens/HomeScreen";
+import AchievementsScreen from "../screens/AchievementsScreen";
 import { AuthContextProvider } from "../context/AuthContext";
 import { EngagementContextProvider } from "../context/EngagementContext";
 import { useAuth } from "../hooks/useAuth";
-import {
+import type {
   AuthStackParamList,
   LearnStackParamList,
   ProfileStackParamList,
@@ -28,10 +31,16 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const LearnStack = createNativeStackNavigator<LearnStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
-const Tab = createBottomTabNavigator();
+type MainTabParamList = {
+  Home: undefined;
+  Learn: NavigatorScreenParams<LearnStackParamList>;
+  Achievements: undefined;
+  Profile: NavigatorScreenParams<ProfileStackParamList>;
+};
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const AuthStackNavigator = () => (
-  <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+  <AuthStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Login">
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
   </AuthStack.Navigator>
@@ -58,8 +67,10 @@ const ProfileStackNavigator = () => (
 );
 
 const MainTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
+  <Tab.Navigator screenOptions={{ headerShown: false }} initialRouteName="Home">
+    <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Learn" component={LearnStackNavigator} />
+    <Tab.Screen name="Achievements" component={AchievementsScreen} />
     <Tab.Screen name="Profile" component={ProfileStackNavigator} />
   </Tab.Navigator>
 );

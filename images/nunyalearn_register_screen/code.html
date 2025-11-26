@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Account - Nunyalearn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "content-light": "#0d1b12",
+              "content-dark": "#e8f3ec",
+              "subtle-light": "#4c9a66",
+              "subtle-dark": "#a3d3b3",
+              "border-light": "#cfe7d7",
+              "border-dark": "#2a4b36"
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+            boxShadow: {
+                'primary-soft': '0 4px 14px 0 rgba(19, 236, 91, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 group/design-root overflow-x-hidden">
+<div class="flex w-full max-w-md flex-col items-center">
+<!-- Header -->
+<div class="w-full text-center mb-8">
+<h1 class="text-content-light dark:text-content-dark tracking-tight text-3xl font-bold leading-tight">Create your account</h1>
+<p class="text-subtle-light dark:text-subtle-dark text-base font-normal leading-normal pt-2">Let's get you started on your learning journey.</p>
+</div>
+<!-- Form -->
+<div class="w-full space-y-4">
+<!-- Full Name Field -->
+<div class="flex flex-col">
+<label class="text-content-light dark:text-content-dark text-sm font-medium leading-normal pb-2" for="fullName">Full Name</label>
+<div class="relative flex w-full items-center">
+<span class="material-symbols-outlined absolute left-4 text-subtle-light dark:text-subtle-dark">person</span>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-content-light dark:text-content-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:border-primary h-14 placeholder:text-subtle-light dark:placeholder:text-subtle-dark pl-12 pr-4 py-3 text-base font-normal leading-normal" id="fullName" placeholder="Enter your full name" value=""/>
+</div>
+</div>
+<!-- Email Field -->
+<div class="flex flex-col">
+<label class="text-content-light dark:text-content-dark text-sm font-medium leading-normal pb-2" for="email">Email</label>
+<div class="relative flex w-full items-center">
+<span class="material-symbols-outlined absolute left-4 text-subtle-light dark:text-subtle-dark">mail</span>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-content-light dark:text-content-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:border-primary h-14 placeholder:text-subtle-light dark:placeholder:text-subtle-dark pl-12 pr-4 py-3 text-base font-normal leading-normal" id="email" placeholder="Enter your email address" type="email" value=""/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col">
+<label class="text-content-light dark:text-content-dark text-sm font-medium leading-normal pb-2" for="password">Password</label>
+<div class="relative flex w-full items-center">
+<span class="material-symbols-outlined absolute left-4 text-subtle-light dark:text-subtle-dark">lock</span>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-content-light dark:text-content-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:border-primary h-14 placeholder:text-subtle-light dark:placeholder:text-subtle-dark pl-12 pr-12 py-3 text-base font-normal leading-normal" id="password" placeholder="Create a password" type="password" value=""/>
+<button aria-label="Toggle password visibility" class="absolute right-4 text-subtle-light dark:text-subtle-dark" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Continue Button -->
+<button class="flex w-full items-center justify-center rounded-full bg-primary text-black h-14 mt-8 px-6 text-base font-bold leading-normal shadow-primary-soft transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]">Continue</button>
+<!-- Footer Link -->
+<p class="mt-8 text-center text-sm font-normal text-subtle-light dark:text-subtle-dark">
+                Already have an account? <a class="font-medium text-primary/90 hover:text-primary" href="#">Log in</a>
+</p>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Test Results - Nunyalearn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400;FILL@0;GRAD@0;opsz@24" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4CAF50",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "text-light": "#333333",
+              "text-dark": "#e0e0e0",
+              "text-secondary-light": "#757575",
+              "text-secondary-dark": "#a0a0a0",
+              "card-light": "#ffffff",
+              "card-dark": "#1a2c20",
+              "border-light": "#e0e0e0",
+              "border-dark": "#304038",
+              "fail-light": "#f87171",
+              "fail-dark": "#b91c1c",
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- TopAppBar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="flex size-12 shrink-0 items-center justify-start">
+<button class="flex items-center justify-center rounded-full h-10 w-10 text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+</div>
+<h2 class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Test Results</h2>
+<div class="flex w-12 items-center justify-end">
+<!-- Placeholder for potential right-side icon -->
+</div>
+</div>
+<!-- HeaderImage (Status Banner) -->
+<div class="@container px-4">
+<div class="bg-cover bg-center flex flex-col justify-end overflow-hidden bg-primary rounded-xl min-h-[200px]" data-alt="Abstract green gradient background for success message">
+<div class="flex flex-col gap-2 p-6">
+<span class="material-symbols-outlined text-5xl text-white">verified</span>
+<p class="text-white tracking-light text-[28px] font-bold leading-tight">Congratulations! You Passed!</p>
+<p class="text-white/80 text-base font-normal leading-normal">You've successfully completed the User Interface Design test.</p>
+</div>
+</div>
+</div>
+<!-- ButtonGroup -->
+<div class="flex justify-center">
+<div class="flex flex-1 gap-3 max-w-[480px] flex-col sm:flex-row items-stretch px-4 py-6">
+<button class="flex min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Download Certificate</span>
+</button>
+<button class="flex min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary-light text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Retake Test</span>
+</button>
+</div>
+</div>
+<div class="px-4 pb-8 space-y-4">
+<!-- Score Breakdown Card -->
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm">
+<h3 class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-[-0.015em] pb-6">Score Breakdown</h3>
+<div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+<div class="relative flex items-center justify-center h-40 w-40">
+<svg class="absolute inset-0" viewbox="0 0 36 36">
+<path class="stroke-current text-gray-200 dark:text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+<path class="stroke-current text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="3" transform="rotate(-90 18 18)"></path>
+</svg>
+<div class="text-center">
+<span class="text-4xl font-bold text-text-light dark:text-text-dark">85%</span>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Final Score</p>
+</div>
+</div>
+<div class="flex-1 space-y-4 w-full">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center size-8 rounded-full bg-primary/20"><span class="material-symbols-outlined text-primary text-lg">check</span></div>
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Correct Answers</span>
+</div>
+<span class="font-bold text-text-light dark:text-text-dark">17/20</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center size-8 rounded-full bg-fail-light/20"><span class="material-symbols-outlined text-fail-light text-lg">close</span></div>
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Incorrect Answers</span>
+</div>
+<span class="font-bold text-text-light dark:text-text-dark">3/20</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center size-8 rounded-full bg-blue-500/10"><span class="material-symbols-outlined text-blue-500 text-lg">timer</span></div>
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Time Taken</span>
+</div>
+<span class="font-bold text-text-light dark:text-text-dark">12m 34s</span>
+</div>
+</div>
+</div>
+</div>
+<!-- XP Breakdown Card -->
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm">
+<h3 class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-[-0.015em] pb-4">XP Breakdown</h3>
+<div class="space-y-3">
+<div class="flex items-center justify-between text-base">
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Base XP</span>
+<span class="font-medium text-text-light dark:text-text-dark">+100</span>
+</div>
+<div class="flex items-center justify-between text-base">
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Speed Bonus</span>
+<span class="font-medium text-text-light dark:text-text-dark">+25</span>
+</div>
+<hr class="border-border-light dark:border-border-dark my-2"/>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-yellow-500">star</span>
+<span class="font-bold text-text-light dark:text-text-dark">Total XP Gained</span>
+</div>
+<span class="font-bold text-primary text-lg">+125 XP</span>
+</div>
+</div>
+</div>
+<!-- Weak Areas Card -->
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm">
+<h3 class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-[-0.015em] pb-4">Areas to Improve</h3>
+<div class="space-y-3">
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-base">Review these topics to master them in the next test.</p>
+<div class="flex items-center gap-3 p-3 bg-background-light dark:bg-background-dark rounded-lg">
+<div class="flex items-center justify-center size-10 rounded-full bg-primary/20"><span class="material-symbols-outlined text-primary">psychology</span></div>
+<p class="flex-1 font-medium text-text-light dark:text-text-dark">Color Theory &amp; Contrast</p>
+</div>
+<div class="flex items-center gap-3 p-3 bg-background-light dark:bg-background-dark rounded-lg">
+<div class="flex items-center justify-center size-10 rounded-full bg-primary/20"><span class="material-symbols-outlined text-primary">grid_view</span></div>
+<p class="flex-1 font-medium text-text-light dark:text-text-dark">Layout &amp; Grid Systems</p>
+</div>
+<button class="flex w-full mt-4 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary-light text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Review Topics</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

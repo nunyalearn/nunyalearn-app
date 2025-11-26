@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NunyaLearn - Topic Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "text-light": "#0d1b12",
+              "text-dark": "#e7f3eb",
+              "card-light": "#ffffff",
+              "card-dark": "#182c1e",
+              "border-light": "#cfe7d7",
+              "border-dark": "#2a4b36"
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-10 flex items-center justify-between bg-background-light/80 p-4 pb-2 backdrop-blur-sm dark:bg-background-dark/80">
+<button class="flex size-10 items-center justify-center rounded-full text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="flex-1 text-center text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Cellular Biology</h1>
+<div class="size-10"></div> <!-- Spacer -->
+</header>
+<main class="flex-1 px-4 py-6">
+<div class="flex flex-col items-center gap-8">
+<!-- Mastery Ring Progress -->
+<div class="relative flex h-56 w-56 items-center justify-center">
+<svg class="h-full w-full -rotate-90" viewbox="0 0 120 120">
+<circle class="stroke-primary/20" cx="60" cy="60" fill="none" r="54" stroke-width="12"></circle>
+<circle class="stroke-primary" cx="60" cy="60" fill="none" r="54" stroke-dasharray="339.29" stroke-dashoffset="84.82" stroke-linecap="round" stroke-width="12"> <!-- 339.29 * (1 - 0.75) -->
+</circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-4xl font-bold leading-none tracking-tight text-text-light dark:text-text-dark">75%</span>
+<span class="text-sm font-medium text-text-light/70 dark:text-text-dark/70">Mastery</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex w-full max-w-md flex-col gap-3">
+<button class="flex h-14 w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-xl bg-primary px-5 text-base font-bold leading-normal tracking-[0.015em] text-text-light transition-transform hover:scale-[1.02] active:scale-[0.98]">
+<span class="material-symbols-outlined">style</span>
+<span class="truncate">Review with Flashcards</span>
+</button>
+<button class="flex h-14 w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-xl bg-card-light px-5 text-base font-bold leading-normal tracking-[0.015em] text-text-light shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-card-dark dark:text-text-dark">
+<span class="material-symbols-outlined">quiz</span>
+<span class="truncate">Take a Quiz</span>
+</button>
+<button class="flex h-14 w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-xl bg-card-light px-5 text-base font-bold leading-normal tracking-[0.015em] text-text-light shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-card-dark dark:text-text-dark">
+<span class="material-symbols-outlined">assignment</span>
+<span class="truncate">Start Practice Test</span>
+</button>
+</div>
+<!-- Topic Stats -->
+<div class="w-full max-w-md">
+<h2 class="mb-3 text-lg font-bold text-text-light dark:text-text-dark">Topic Stats</h2>
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+<div class="flex flex-col gap-1.5 rounded-xl border border-border-light bg-card-light p-4 shadow-sm dark:border-border-dark dark:bg-card-dark">
+<p class="text-sm font-medium text-text-light/70 dark:text-text-dark/70">Quizzes</p>
+<p class="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">5</p>
+</div>
+<div class="flex flex-col gap-1.5 rounded-xl border border-border-light bg-card-light p-4 shadow-sm dark:border-border-dark dark:bg-card-dark">
+<p class="text-sm font-medium text-text-light/70 dark:text-text-dark/70">Practice Tests</p>
+<p class="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">2</p>
+</div>
+<div class="flex flex-col gap-1.5 rounded-xl border border-border-light bg-card-light p-4 shadow-sm dark:border-border-dark dark:bg-card-dark">
+<p class="text-sm font-medium text-text-light/70 dark:text-text-dark/70">Current Mastery</p>
+<p class="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">75%</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<footer class="sticky bottom-0 z-10 mt-auto border-t border-border-light bg-background-light/90 pt-2 backdrop-blur-sm dark:border-border-dark dark:bg-background-dark/90">
+<nav class="flex justify-around pb-3">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-light/60 dark:text-text-dark/60" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 font-bold text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">view_list</span>
+<p class="text-xs font-bold leading-normal tracking-[0.015em]">Topics</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-light/60 dark:text-text-dark/60" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-light/60 dark:text-text-dark/60" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Settings</p>
+</a>
+</nav>
+</footer>
+</div>
+</body></html>

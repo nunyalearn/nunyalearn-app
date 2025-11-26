@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nunyalearn Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0d1b12] dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Top App Bar -->
+<div class="flex items-center p-4 pb-2 justify-between bg-background-light dark:bg-background-dark">
+<div class="flex size-12 shrink-0 items-center justify-start">
+<!-- Intentionally left empty for spacing -->
+</div>
+<div class="flex w-12 items-center justify-end">
+<p class="text-[#4c9a66] dark:text-primary/80 text-base font-bold leading-normal tracking-[0.015em] shrink-0">Skip</p>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex flex-col grow px-4 justify-between">
+<div class="flex-grow flex flex-col justify-center">
+<!-- Illustration -->
+<div class="flex w-full grow-0 justify-center py-3">
+<div class="w-full max-w-sm aspect-[4/3] flex">
+<div class="w-full bg-center bg-no-repeat bg-contain" data-alt="A vector illustration of a person climbing a staircase made of books towards a glowing lightbulb, representing step-by-step learning." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7SmG4WG8LKNZ_QCoDeKMhF63n0HZ1IuV89FQZ3M__WTTJPPY3aM3kBX-Ob1CGxemkgEkl8wN5ziACciGsgF_bZh-ll_z2WHXYXnZ5kNyx8xrDrK2OvpaTm6Hl7swlR4ew4O95pwcsitMPEiZSM7byS7vmgTIvLef5h35HvdK23P1Z81f_UxJgCDjJQfvWOeb1d3L-v5m91hRs2IP-G1OQrpiRMTlBlM7h162zg0A4KRM4fqdc-Pq5W2bJZazbh5p3B6TaW1F3By8d");'></div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center">
+<h1 class="text-[#0d1b12] dark:text-white tracking-tight text-[32px] font-bold leading-tight pt-6 pb-3">Learn anything step-by-step</h1>
+<p class="text-[#0d1b12] dark:text-gray-300 text-base font-normal leading-normal pb-3 pt-1">
+                        Our app breaks down complex topics into manageable, easy-to-follow lessons to guide your learning journey.
+                    </p>
+</div>
+</div>
+<!-- Bottom Section -->
+<div class="pb-8 pt-4">
+<!-- Page Indicators -->
+<div class="flex w-full flex-row items-center justify-center gap-3 py-5">
+<div class="h-2 w-2 rounded-full bg-primary/20 dark:bg-primary/30"></div>
+<div class="h-2 w-6 rounded-full bg-primary"></div>
+<div class="h-2 w-2 rounded-full bg-primary/20 dark:bg-primary/30"></div>
+</div>
+<!-- Primary Button -->
+<button class="flex w-full items-center justify-center rounded-xl bg-primary px-6 py-4 text-center text-lg font-bold text-background-dark shadow-[0_4px_14px_0_rgba(19,236,91,0.39)] hover:shadow-[0_6px_20px_0_rgba(19,236,91,0.23)]">
+                    Next
+                </button>
+</div>
+</main>
+</div>
+</body></html>

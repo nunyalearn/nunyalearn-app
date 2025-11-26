@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nunyalearn Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4CAF50",
+            "background-light": "#F7F9F7",
+            "background-dark": "#102216",
+            "primary-light": "#A5D6A7",
+            "text-light": "#333333",
+            "text-dark": "#F7F9F7",
+            "accent": "#FFD54F"
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "0.75rem",
+            "xl": "1rem",
+            "full": "9999px"
+          },
+          boxShadow: {
+            'soft': '0 4px 14px 0 rgba(76, 175, 80, 0.25)',
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<div class="flex flex-col items-center justify-between flex-grow w-full max-w-md mx-auto p-6">
+<!-- Top Section: Image -->
+<div class="flex flex-col items-center justify-center w-full flex-grow">
+<div class="w-full max-w-xs aspect-square p-4">
+<div class="w-full h-full bg-center bg-no-repeat bg-contain" data-alt="Illustration of a person next to a growing plant with topic icons on its leaves, symbolizing learning progress." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCD18CYgfSjpCC0fZ_1EDbgwUf7WzeFKAKAmZnRBv9MOB33Qn3VKG1111hDqYL4-vzd-a7h5B4sV_NvDD-8Zbx_cwenzPTfRBw7jg0vEXJyN_M6dwMIKrLQ7c1lbVd4ylVP7NdbhGla7rR-dwG-tDR8Y833C12ccF0rXjaaHfdSQ6ziWUK-oiRoSmh8-suuGvQwTmZKi_bSmjE_NZXchKjA4eJ8MNEUBALGP8_xUXyTkNsz7El-8re1D3Knh6YksJ8Z69J0bSn5Zfjj");'></div>
+</div>
+</div>
+<!-- Bottom Section: Text, Indicators, Button -->
+<div class="flex flex-col items-center justify-center w-full pb-4 pt-8">
+<!-- Page Indicators -->
+<div class="flex w-full flex-row items-center justify-center gap-2 py-5">
+<div class="h-2 w-2 rounded-full bg-primary-light/50 dark:bg-primary-light/30"></div>
+<div class="h-2 w-2 rounded-full bg-primary-light/50 dark:bg-primary-light/30"></div>
+<div class="h-2 w-2 rounded-full bg-primary-light/50 dark:bg-primary-light/30"></div>
+<div class="h-2.5 w-5 rounded-full bg-primary"></div>
+</div>
+<!-- Headline Text -->
+<h1 class="text-text-light dark:text-text-dark tracking-tight text-3xl font-bold leading-tight px-4 text-center pb-3 pt-6">Track Your Mastery by Topic</h1>
+<!-- Body Text -->
+<p class="text-text-light/80 dark:text-text-dark/80 text-base font-normal leading-relaxed pb-3 pt-1 px-4 text-center max-w-sm">
+          Visualize your learning progress and identify areas for improvement to help you grow.
+        </p>
+<!-- Spacer -->
+<div class="h-8"></div>
+<!-- CTA Button -->
+<div class="flex px-4 py-3 w-full">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 flex-1 bg-primary text-white text-lg font-bold leading-normal tracking-wide shadow-soft transition-transform duration-200 ease-in-out hover:scale-[1.02] active:scale-[0.98]">
+<span class="truncate">Start Learning</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

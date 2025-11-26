@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Set Daily Goal - Nunyalearn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>.custom-radio:checked {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBdqJOWbDYm_oxwl85KQW1a5J6BrioB9WCjfEy6zjxGSOTzkyZLfKLj4DACrmmiedB8iw0TwybXSCDwMM6yX3l0TFFR8IrAhWT_rcV9vnTgS3iNI3Y9w6WhatBdQumc0iwg-ks_H7C_nFBqw3fXqysvI18zRn2xaeCK48Y6CnTb05NIQZ8CPQGCoKG0dEzTyD9Ze1mEoDlOAp6m-GmU3Qm-URGO7a5OiLPjFFxIn8TylcaACCtjVfH-il2XONiiIq-ukYwO6Xst9jxc)
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<!-- Header Image -->
+<div class="@container">
+<div class="@[480px]:px-4 @[480px]:py-3 p-4">
+<div class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-[#eafaf0] dark:bg-[#1a3824] @[480px]:rounded-xl rounded-xl min-h-[218px] shadow-sm" data-alt="Friendly illustration of a cheerful character holding a glowing lightbulb, symbolizing learning and ideas." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDFuK6k31_KvhD6AMnGPD_sse63hedFkyTJKLVsymrN8lBfGbu34V4iiGsw1WWhtjM77DZXs2XB6nNy-BJMqtgwSBdtsiqMeUBHwMkXXwxNpNMyvfFlVcHJF4SryVyRWpYzljWypViR3UFenguxZFm0tLIceQuqdDKaq7aUxVKvKc0H-6ysgtFc4CEx3LOz_9UOcCzcxd98Uj2Qyuy7-3Mm-QlwRVcOYwSftlr6ZEJBkVpmTsQ8Aw3LLzoxhkiBOTd6Q3bbxCpSx5rO");'></div>
+</div>
+</div>
+<!-- Headline Text -->
+<h1 class="text-[#0d1b12] dark:text-gray-100 tracking-tight text-[32px] font-bold leading-tight px-4 text-center pb-3 pt-4 font-display">Set your daily goal</h1>
+<!-- Body Text -->
+<p class="text-gray-600 dark:text-gray-400 text-base font-normal leading-normal pb-3 pt-1 px-4 text-center font-display">Choose a target that works for you. You can always change it later!</p>
+<!-- Radio List for Goal Selection -->
+<div class="flex flex-col gap-3 p-4">
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-700 p-[15px] has-[:checked]:border-primary has-[:checked]:bg-primary/20 dark:has-[:checked]:bg-primary/30 dark:has-[:checked]:border-primary/50 transition-all duration-200 ease-in-out cursor-pointer shadow-sm">
+<div class="flex grow flex-col">
+<p class="text-[#0d1b12] dark:text-gray-100 text-base font-medium leading-normal">Light</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">10 XP / day</p>
+</div>
+<input class="h-6 w-6 shrink-0 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-primary custom-radio focus:outline-none focus:ring-0 focus:ring-offset-0" name="daily_goal" type="radio"/>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-primary bg-primary/20 dark:bg-primary/30 dark:border-primary/50 p-[15px] transition-all duration-200 ease-in-out cursor-pointer shadow-sm">
+<div class="flex grow flex-col">
+<p class="text-[#0d1b12] dark:text-gray-100 text-base font-medium leading-normal">Standard</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">25 XP / day</p>
+</div>
+<input checked="" class="h-6 w-6 shrink-0 border-2 border-primary bg-primary custom-radio focus:outline-none focus:ring-0 focus:ring-offset-0" name="daily_goal" type="radio"/>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-700 p-[15px] has-[:checked]:border-primary has-[:checked]:bg-primary/20 dark:has-[:checked]:bg-primary/30 dark:has-[:checked]:border-primary/50 transition-all duration-200 ease-in-out cursor-pointer shadow-sm">
+<div class="flex grow flex-col">
+<p class="text-[#0d1b12] dark:text-gray-100 text-base font-medium leading-normal">Intense</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">50 XP / day</p>
+</div>
+<input class="h-6 w-6 shrink-0 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-primary custom-radio focus:outline-none focus:ring-0 focus:ring-offset-0" name="daily_goal" type="radio"/>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-700 p-[15px] has-[:checked]:border-primary has-[:checked]:bg-primary/20 dark:has-[:checked]:bg-primary/30 dark:has-[:checked]:border-primary/50 transition-all duration-200 ease-in-out cursor-pointer shadow-sm">
+<div class="flex grow flex-col">
+<p class="text-[#0d1b12] dark:text-gray-100 text-base font-medium leading-normal">Custom</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">Set your own pace</p>
+</div>
+<input class="h-6 w-6 shrink-0 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-primary custom-radio focus:outline-none focus:ring-0 focus:ring-offset-0" name="daily_goal" type="radio"/>
+</label>
+</div>
+<!-- Spacer -->
+<div class="flex-grow"></div>
+<!-- Single Button -->
+<div class="flex px-4 py-3 sticky bottom-0 bg-background-light dark:bg-background-dark">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 flex-1 bg-primary text-[#0d1b12] text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/30 hover:bg-opacity-90 transition-opacity">
+<span class="truncate">Continue</span>
+</button>
+</div>
+</div>
+</body></html>

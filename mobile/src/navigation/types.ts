@@ -6,10 +6,10 @@ export type AuthStackParamList = {
 export type LearnStackParamList = {
   Grades: undefined;
   Subjects: { gradeId: number };
-  Topics: { subjectId: number };
-  QuizList: { topicId: number };
+  Topics: { subjectId: number; subjectName?: string };
+  QuizList: { topicId: number; topicName?: string; subjectName?: string };
   PracticeTestList: { topicId: number };
-  QuizPlayer: { quizId: number; topicId?: number };
+  QuizPlayer: { quizId: number; topicId?: number; topicName?: string };
   QuizResult: { attemptId: number };
   TestPlayer: { testId: number; topicId?: number; mode?: "practice" | "exam" };
   TestResult: { attemptId: number };

@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { styled } from "../utils/styled";
 
-import api from "../services/api";
-import { LearnStackParamList } from "../navigation/types";
-
-type Subject = {
-  id: number;
-  subjectId?: number;
-  subjectName?: string;
-  name?: string;
-};
+import Screen from "../components/UI/Screen";
+import Button from "../components/UI/Button";
+import SubjectTile from "../components/subject/SubjectTile";
+import { colors } from "../theme/colors";
+import { subjectService, type Subject } from "../services/subject.service";
+import type { LearnStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<LearnStackParamList, "Subjects">;
+
+const StyledView = styled(View);
+const StyledText = styled(Text);
 
 export default function SubjectScreen({ navigation, route }: Props) {
   const { gradeId } = route.params;
@@ -24,9 +27,8 @@ export default function SubjectScreen({ navigation, route }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get("/curriculum/subjects", { params: { gradeLevelId: gradeId } });
-      const data = response.data?.data ?? response.data;
-      setSubjects(data?.subjects ?? data ?? []);
+      const data = await subjectService.fetchSubjects(gradeId);
+      setSubjects(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load subjects");
     } finally {
@@ -38,43 +40,117 @@ export default function SubjectScreen({ navigation, route }: Props) {
     loadSubjects();
   }, [loadSubjects]);
 
-  const handleSelect = (subject: Subject) => {
-    navigation.navigate("Topics", { subjectId: subject.subjectId ?? subject.id });
-  };
+  const subjectCount = subjects.length;
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  const gridData = useMemo(() => subjects, [subjects]);
 
-  if (error) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 16 }}>
-        <Text style={{ color: "red", marginBottom: 12 }}>{error}</Text>
-        <TouchableOpacity onPress={loadSubjects} style={{ padding: 12, backgroundColor: "#222", borderRadius: 8 }}>
-          <Text style={{ color: "#fff" }}>Try again</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const handleSelect = useCallback(
+    (subject: Subject) => {
+      const subjectId = subject.subjectId ?? subject.id;
+      if (!subjectId) return;
+      navigation.navigate("Topics", { subjectId, subjectName: subject.subjectName ?? subject.name });
+    },
+    [navigation],
+  );
+
+  const renderGrid = () => (
+    <StyledView className="flex-row flex-wrap justify-between gap-4">
+      {gridData.map((subject, index) => (
+        <SubjectTile
+          key={`${subject.subjectId ?? subject.id ?? index}`}
+          subject={subject}
+          onPress={() => handleSelect(subject)}
+          style={styles.tile}
+        />
+      ))}
+    </StyledView>
+  );
 
   return (
-    <FlatList
-      contentContainerStyle={{ padding: 16, gap: 12 }}
-      data={subjects}
-      keyExtractor={(item) => String(item.subjectId ?? item.id)}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          onPress={() => handleSelect(item)}
-          style={{ padding: 16, borderRadius: 8, backgroundColor: "#f3f3f3" }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>{item.subjectName ?? item.name ?? "Subject"}</Text>
-        </TouchableOpacity>
+    <Screen scrollable contentClassName="gap-8">
+      <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} style={styles.hero}>
+        <StyledView className="flex-row items-start gap-4">
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => navigation.goBack()}
+            style={[styles.backButton, { borderColor: colors.surface }]}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.surface} />
+          </TouchableOpacity>
+          <StyledView className="flex-1">
+            <StyledText
+              className="text-xs font-semibold uppercase tracking-wide"
+              style={{ color: colors.surface, opacity: 0.8 }}
+            >
+              Grade {gradeId}
+            </StyledText>
+            <StyledText className="mt-1 text-3xl font-bold" style={{ color: colors.surface }}>
+              Subjects
+            </StyledText>
+            <StyledText className="mt-2 text-base" style={{ color: colors.surface, opacity: 0.9 }}>
+              {subjectCount} available courses
+            </StyledText>
+          </StyledView>
+        </StyledView>
+      </LinearGradient>
+
+      {loading ? (
+        <StyledView className="items-center justify-center py-10">
+          <ActivityIndicator color={colors.primary} />
+        </StyledView>
+      ) : error ? (
+        <StyledView className="items-center gap-4 rounded-3xl border p-6" style={styles.errorCard}>
+          <StyledText className="text-center text-base" style={styles.mutedText}>
+            {error}
+          </StyledText>
+          <Button title="Try again" onPress={loadSubjects} />
+        </StyledView>
+      ) : subjectCount === 0 ? (
+        <StyledView className="items-center gap-3 rounded-3xl border p-6" style={styles.emptyCard}>
+          <StyledText className="text-lg font-semibold" style={styles.sectionHeading}>
+            Nothing here yet
+          </StyledText>
+          <StyledText className="text-center" style={styles.mutedText}>
+            We&apos;re stitching together new content for this grade. Check back soon!
+          </StyledText>
+        </StyledView>
+      ) : (
+        renderGrid()
       )}
-    />
+    </Screen>
   );
 }
 
+const styles = StyleSheet.create({
+  hero: {
+    borderRadius: 32,
+    padding: 24,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tile: {
+    flexBasis: "48%",
+    minWidth: 150,
+    flexGrow: 1,
+  },
+  sectionHeading: {
+    color: colors.text,
+  },
+  mutedText: {
+    color: colors.muted,
+  },
+  errorCard: {
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  emptyCard: {
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+});
