@@ -7,7 +7,8 @@
     "android": "node scripts/start-device.js",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "clean:runtime": "node scripts/clean-runtime.js"
+    "clean:runtime": "node scripts/clean-runtime.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -46,6 +47,8 @@
     "@types/react": "~19.1.0",
     "@types/react-native": "^0.72.8",
     "babel-preset-expo": "^54.0.7",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "rimraf": "^5.0.10",
     "typescript": "~5.9.2"
   },
